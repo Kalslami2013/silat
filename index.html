@@ -1,0 +1,983 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>دفتر الصلات</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="الصلات">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#F2F3F7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<style>
+/* Layout: native iOS shell — translucent top bar + large title, inset grouped lists, bottom tab bar, bottom sheets. RTL. */
+:root{
+  --bg:#F2F3F7; --card:#FFFFFF; --fill:#E9EBF0; --ink:#111418; --muted:#6B7280; --sep:#D9DCE3;
+  --accent:#0A7A73; --accent-ink:#FFFFFF; --accent-soft:#DDF1EE;
+  --gold:#A86A00; --gold-soft:#FAEBCB; --red:#D1352B; --red-soft:#FBE1DE; --green:#248A4F; --green-soft:#DDF2E5;
+  --bar:rgba(247,248,251,.84); --shadow:0 1px 2px rgba(16,24,40,.06);
+  --font:-apple-system,"SF Arabic","SF Pro Text","Geeza Pro","Segoe UI",Tahoma,sans-serif;
+  --r:14px; color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#000000; --card:#1C1C1E; --fill:#2C2C2E; --ink:#F2F3F5; --muted:#9A9FA8; --sep:#38383A;
+  --accent:#3CC2B6; --accent-ink:#00211E; --accent-soft:#0E302C;
+  --gold:#F0B44A; --gold-soft:#3A2B0F; --red:#FF6B60; --red-soft:#3B1715; --green:#4CD483; --green-soft:#12301F;
+  --bar:rgba(18,18,20,.82); --shadow:none; color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);margin:0}
+body{padding-top:env(safe-area-inset-top,0px);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;overscroll-behavior-y:none}
+img{max-width:100%}
+[hidden]{display:none!important}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bar);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
+.pad{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.page{max-width:720px;margin:0 auto}
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bar);-webkit-backdrop-filter:saturate(180%) blur(18px);backdrop-filter:saturate(180%) blur(18px);border-bottom:.5px solid transparent;transition:border-color .2s}
+.topbar.scrolled{border-bottom-color:var(--sep)}
+.topbar .in{display:flex;align-items:center;gap:8px;height:46px}
+.topbar .mini{font-weight:600;font-size:17px;opacity:0;transition:opacity .2s;flex:1;text-align:center}
+.topbar.scrolled .mini{opacity:1}
+.store{font-size:11px;color:var(--muted);display:inline-flex;align-items:center;gap:5px;white-space:nowrap;min-width:80px}
+.store i{width:7px;height:7px;border-radius:50%;background:var(--green)}
+.store.off i{background:var(--gold)}
+.iconbtn{appearance:none;border:0;background:none;color:var(--accent);font:inherit;font-size:16px;padding:6px;min-width:40px;min-height:40px;display:inline-grid;place-items:center;cursor:pointer;border-radius:10px}
+.iconbtn svg{width:24px;height:24px}
+.topbar .iconbtn{min-width:80px;justify-items:end}
+.largetitle{display:flex;align-items:flex-end;gap:10px;padding-block:2px 10px}
+.largetitle h1{font-size:34px;line-height:1.15;font-weight:700;margin:0;letter-spacing:-.01em;flex:1;min-width:0;text-wrap:balance}
+.lt-sub{color:var(--muted);font-size:15px;margin:-6px 0 8px}
+main{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+main.chatmode{padding-bottom:calc(170px + env(safe-area-inset-bottom,0px))}
+.stack{display:flex;flex-direction:column;gap:22px;padding-block:4px 20px}
+.gtitle{font-size:13px;font-weight:400;color:var(--muted);margin:0 0 6px;padding-inline:16px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.gtitle .link{font-size:13px}
+.group{background:var(--card);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)}
+.cell{display:flex;align-items:center;gap:12px;padding:11px 16px;min-height:52px;position:relative;cursor:pointer;width:100%;text-align:start;font:inherit;color:inherit;background:none;border:0;text-decoration:none}
+.cell+.cell::before{content:"";position:absolute;top:0;inset-inline-end:0;inset-inline-start:68px;border-top:.5px solid var(--sep)}
+.cell.plain+.cell::before,.cell+.cell.plain::before{inset-inline-start:16px}
+.cell:active{background:var(--fill)}
+.cell .body{flex:1;min-width:0}
+.cell .t{font-weight:600;font-size:16px;overflow-wrap:anywhere;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.cell .s{font-size:14px;color:var(--muted);overflow-wrap:anywhere}
+.cell .chev{color:var(--muted);opacity:.5;flex:none;width:8px;height:13px}
+.avatar{flex:none;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:17px;color:#fff;background:linear-gradient(160deg,var(--av1,#5B8DEF),var(--av2,#3B63C4))}
+.avatar.org{border-radius:11px}
+.avatar.lg{width:78px;height:78px;font-size:32px}
+.avatar.lg.org{border-radius:20px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:500;padding:2px 8px;border-radius:99px;background:var(--fill);color:var(--muted);white-space:nowrap}
+.chip.late{background:var(--red-soft);color:var(--red)} .chip.soon{background:var(--gold-soft);color:var(--gold)} .chip.ok{background:var(--green-soft);color:var(--green)} .chip.acc{background:var(--accent-soft);color:var(--accent)}
+.num{font-variant-numeric:tabular-nums}
+.empty{padding:22px 16px;text-align:center;color:var(--muted);font-size:15px}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile{background:var(--card);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:2px;box-shadow:var(--shadow);border:0;font:inherit;color:inherit;text-align:start;cursor:pointer}
+.tile .v{font-size:30px;font-weight:700;line-height:1.15;font-variant-numeric:tabular-nums}
+.tile .l{font-size:13px;color:var(--muted)}
+.tile.red .v{color:var(--red)} .tile.gold .v{color:var(--gold)} .tile.acc .v{color:var(--accent)}
+.ask{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:var(--r);padding:12px 14px;box-shadow:var(--shadow);cursor:pointer;border:0;width:100%;font:inherit;color:var(--muted);text-align:start}
+.ask .spark{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--accent);color:var(--accent-ink);flex:none}
+.ask b{color:var(--ink);font-weight:600;display:block}
+.banner{background:var(--gold-soft);border-radius:var(--r);padding:12px 14px;font-size:14px;line-height:1.6}
+.banner b{color:var(--gold)}
+.search{display:flex;align-items:center;gap:8px;background:var(--fill);border-radius:11px;padding:0 10px;height:38px}
+.search svg{width:16px;height:16px;color:var(--muted);flex:none}
+.search input{border:0;background:none;outline:none;font:inherit;font-size:16px;color:var(--ink);flex:1;min-width:0;height:100%}
+.seg{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-block:2px}
+.seg::-webkit-scrollbar{display:none}
+.pill{appearance:none;border:0;font:inherit;font-size:14px;font-weight:500;background:var(--card);color:var(--ink);padding:6px 13px;border-radius:99px;cursor:pointer;white-space:nowrap;box-shadow:var(--shadow)}
+.pill[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.pill .n{opacity:.6;margin-inline-start:5px;font-variant-numeric:tabular-nums}
+.btn{appearance:none;font:inherit;font-size:16px;font-weight:600;border:0;background:var(--card);color:var(--accent);padding:11px 16px;border-radius:12px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;min-height:46px;box-shadow:var(--shadow)}
+.btn.pri{background:var(--accent);color:var(--accent-ink)}
+.btn.sm{font-size:14px;padding:6px 12px;min-height:34px;border-radius:9px;background:var(--fill);box-shadow:none}
+.btn.red{color:var(--red)}
+.btn.wide{width:100%}
+.btn[disabled]{opacity:.45}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.link{appearance:none;border:0;background:none;color:var(--accent);font:inherit;cursor:pointer;padding:0}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.field{display:flex;align-items:center;gap:10px;padding:10px 16px;min-height:48px;position:relative}
+.field+.field::before{content:"";position:absolute;top:0;inset-inline-end:0;inset-inline-start:16px;border-top:.5px solid var(--sep)}
+.field>label{flex:none;width:92px;font-size:15px;color:var(--ink)}
+.field input,.field select,.field textarea{flex:1;min-width:0;border:0;background:none;font:inherit;font-size:16px;color:var(--ink);outline:none;padding:0}
+.field textarea{resize:vertical;min-height:70px;line-height:1.6}
+.field.col{flex-direction:column;align-items:stretch;gap:4px}
+.field.col>label{width:auto;color:var(--muted);font-size:13px}
+.ltr{direction:ltr;text-align:right}
+.hint{font-size:13px;color:var(--muted);margin:6px 16px 0;line-height:1.6}
+dialog.sheet{border:0;padding:0;margin:auto auto 0;width:100%;max-width:720px;max-height:94dvh;border-radius:16px 16px 0 0;background:var(--bg);color:var(--ink)}
+dialog.sheet[open]{animation:up .28s cubic-bezier(.2,.8,.2,1)}
+@keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+dialog.sheet::backdrop{background:rgba(0,0,0,.4)}
+.sh{display:flex;flex-direction:column;max-height:94dvh}
+.sh-h{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding-block:8px 6px;position:relative}
+.sh-h::before{content:"";position:absolute;top:6px;left:50%;transform:translateX(-50%);width:36px;height:5px;border-radius:3px;background:var(--sep)}
+.sh-h h2{font-size:17px;font-weight:600;margin:12px 0 0;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60vw}
+.sh-h .a{margin-top:12px}
+.sh-h .a.end{justify-self:end}
+.sh-b>*{flex-shrink:0}
+.sh-b{overflow-y:auto;padding-block:8px calc(28px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:20px;-webkit-overflow-scrolling:touch}
+.hero{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding-top:6px}
+.hero h3{font-size:24px;margin:4px 0 0;font-weight:700;text-wrap:balance}
+.hero p{margin:0;color:var(--muted)}
+.actions{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.act{appearance:none;border:0;background:var(--card);border-radius:12px;padding:10px 4px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--accent);font:inherit;font-size:12px;cursor:pointer;text-decoration:none;box-shadow:var(--shadow)}
+.act svg{width:22px;height:22px}
+.act.off{opacity:.4;pointer-events:none}
+.log .e{padding:10px 16px;font-size:14px;position:relative}
+.log .e::before{content:"";position:absolute;top:0;inset-inline:16px 0;border-top:.5px solid var(--sep)}
+.log .d{color:var(--muted);font-size:12px}
+.preview{background:var(--card);border-radius:var(--r);padding:14px 16px;white-space:pre-wrap;font-size:15px;overflow-wrap:anywhere;max-height:260px;overflow-y:auto;box-shadow:var(--shadow)}
+.preview .subj{font-weight:700;display:block;margin-bottom:8px}
+.tabbar{position:fixed;inset:auto 0 0 0;z-index:25;background:var(--bar);-webkit-backdrop-filter:saturate(180%) blur(18px);backdrop-filter:saturate(180%) blur(18px);border-top:.5px solid var(--sep);padding-bottom:env(safe-area-inset-bottom,0px)}
+.tabbar .in{display:grid;grid-template-columns:repeat(5,1fr);max-width:720px;margin:0 auto;padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+.tb{appearance:none;border:0;background:none;font:inherit;font-size:10.5px;font-weight:500;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 0 6px;cursor:pointer;position:relative}
+.tb svg{width:26px;height:26px}
+.tb[aria-selected="true"]{color:var(--accent)}
+.tb .badge{position:absolute;top:3px;left:calc(50% - 22px);min-width:17px;height:17px;border-radius:9px;background:var(--red);color:#fff;font-size:11px;display:grid;place-items:center;padding:0 4px;font-variant-numeric:tabular-nums}
+.msgs{display:flex;flex-direction:column;gap:10px;padding-block:6px 10px}
+.msg{max-width:86%;padding:9px 13px;border-radius:18px;font-size:16px;line-height:1.55;overflow-wrap:anywhere;white-space:pre-wrap}
+.msg.u{align-self:flex-end;background:var(--accent);color:var(--accent-ink);border-end-end-radius:6px}
+.msg.a{align-self:flex-start;background:var(--card);border-end-start-radius:6px;box-shadow:var(--shadow)}
+.msg.a a{color:var(--accent)}
+.msg.thinking{color:var(--muted)}
+.msg .dots{display:inline-flex;gap:3px;margin-inline-start:6px;vertical-align:middle}
+.msg .dots i{width:5px;height:5px;border-radius:50%;background:currentColor;animation:blink 1.2s infinite}
+.msg .dots i:nth-child(2){animation-delay:.2s}.msg .dots i:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,80%,100%{opacity:.25}40%{opacity:1}}
+.attach{align-self:flex-start;display:flex;flex-direction:column;gap:6px;max-width:92%;width:100%}
+.suggest{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-block:4px}
+.suggest::-webkit-scrollbar{display:none}
+.sugg{appearance:none;border:0;background:var(--card);border-radius:14px;padding:10px 12px;font:inherit;font-size:14px;color:var(--ink);text-align:start;cursor:pointer;min-width:170px;max-width:220px;box-shadow:var(--shadow);white-space:normal;flex:none}
+.sugg b{display:block;font-size:14px;margin-bottom:2px}
+.sugg span{color:var(--muted);font-size:13px}
+.composer{position:fixed;inset-inline:0;bottom:calc(57px + env(safe-area-inset-bottom,0px));z-index:24;background:var(--bar);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border-top:.5px solid var(--sep)}
+.composer .in{display:flex;align-items:flex-end;gap:6px;padding-block:8px}
+.composer textarea{flex:1;min-width:0;border:.5px solid var(--sep);background:var(--card);border-radius:20px;padding:8px 14px;font:inherit;font-size:16px;color:var(--ink);resize:none;max-height:140px;line-height:1.45;outline:none}
+.send{flex:none;width:36px;height:36px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;cursor:pointer;margin-bottom:2px}
+.send[disabled]{opacity:.35}
+.send svg,.clip svg{width:20px;height:20px}
+.clip{flex:none;width:36px;height:36px;border-radius:50%;border:0;background:none;color:var(--accent);display:grid;place-items:center;cursor:pointer;margin-bottom:2px}
+.thumbs{display:flex;gap:6px;padding-top:8px}
+.thumbs img{width:48px;height:48px;object-fit:cover;border-radius:8px}
+.toast{position:fixed;top:calc(56px + env(safe-area-inset-top,0px));left:50%;transform:translate(-50%,-10px);background:var(--ink);color:var(--bg);padding:9px 18px;border-radius:99px;font-size:14px;font-weight:500;z-index:60;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;max-width:calc(100vw - 32px)}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header class="topbar" id="topbar"><div class="page pad in">
+  <span class="store" id="store"><i></i><span>على جهازك</span></span>
+  <span class="mini" id="mini"></span>
+  <button class="iconbtn" id="topAct" aria-label="إضافة"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+</div></header>
+<main id="main"><div class="page pad" id="view"></div></main>
+<div class="composer" id="composer" hidden><div class="page pad">
+  <div class="thumbs" id="thumbs" hidden></div>
+  <div class="in">
+    <button class="clip" id="clipBtn" aria-label="إرفاق صورة"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="14" rx="3"/><circle cx="12" cy="13" r="3.2"/><path d="M8.5 6l1.5-2h4l1.5 2"/></svg></button>
+    <input type="file" id="photo" accept="image/*" hidden multiple>
+    <textarea id="chatIn" rows="1" placeholder="اسأل، أو اطلب بحثًا، أو الصق نصًا…"></textarea>
+    <button class="send" id="sendBtn" aria-label="إرسال" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button>
+  </div></div></div>
+<nav class="tabbar"><div class="in" role="tablist">
+  <button class="tb" data-tab="today" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/><circle cx="12" cy="15" r="1.6" fill="currentColor" stroke="none"/></svg>اليوم<span class="badge" id="bToday" hidden></span></button>
+  <button class="tb" data-tab="contacts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20c.8-3.8 4-5.8 7.5-5.8s6.7 2 7.5 5.8"/></svg>الصلات</button>
+  <button class="tb" data-tab="ai"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l1.9 5.6 5.6 1.9-5.6 1.9L12 17.5l-1.9-5.6L4.5 10l5.6-1.9z"/><path d="M18.5 15l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg>المساعد</button>
+  <button class="tb" data-tab="opps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="3"/><path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7M3 12.5h18"/></svg>الفرص</button>
+  <button class="tb" data-tab="more"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5.5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="18.5" cy="12" r="1.9"/></svg>المزيد</button>
+</div></nav>
+<dialog class="sheet" id="sheet"><div class="sh" id="shIn"></div></dialog>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= helpers ================= */
+const $=(s,r=document)=>r.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const todayISO=()=>{const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10)};
+const addDays=(iso,n)=>{const d=new Date(iso+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)};
+const diff=(a,b)=>Math.round((new Date(b+'T12:00:00Z')-new Date(a+'T12:00:00Z'))/864e5);
+const fmt=iso=>{if(!iso)return '—';try{return new Intl.DateTimeFormat('ar-u-nu-latn',{day:'numeric',month:'short',year:'numeric'}).format(new Date(iso+'T12:00:00'))}catch{return iso}};
+const newId=p=>p+'-'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const norm=s=>String(s||'').toLowerCase().replace(/[\u064B-\u0652\u0640]/g,'').replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي');
+let T=todayISO();
+const isoDate=s=>/^\d{4}-\d{2}-\d{2}$/.test(String(s||''))?s:'';
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('on'),2400)}
+async function copy(text){try{await navigator.clipboard.writeText(text);toast('نُسخ')}catch{const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');toast('نُسخ')}catch{toast('تعذّر النسخ')}ta.remove()}}
+const AV=[['#5B8DEF','#3B63C4'],['#2FB39A','#14826E'],['#F08A5D','#C95F35'],['#A77BEA','#7A52C4'],['#E86B8E','#BE4468'],['#4FB3E0','#2A86B5'],['#D9A53A','#AE7D16']];
+function avStyle(s){let h=0;for(const ch of String(s))h=(h*31+ch.charCodeAt(0))>>>0;const [a,b]=AV[h%AV.length];return `--av1:${a};--av2:${b}`}
+const initial=s=>(String(s||'؟').replace(/^(د\.|أ\.|م\.)\s*/,'').trim()[0]||'؟');
+const chev='<svg class="chev" viewBox="0 0 9 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 1L1.5 7 7 13"/></svg>';
+const ICON={
+ mail:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="M4 7l8 6 8-6"/></svg>',
+ phone:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M5 4h3.5l1.5 4-2 1.5a11 11 0 0 0 6.5 6.5L16 14l4 1.5V19a1.5 1.5 0 0 1-1.6 1.5C10.5 20 4 13.5 3.5 5.6A1.5 1.5 0 0 1 5 4z"/></svg>',
+ wa:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 20l1.3-3.8A8 8 0 1 1 8 19z"/><path d="M9.3 8.8c.2 2.8 3 5.6 5.9 5.9l1-1.3-2-1-.9.8a5 5 0 0 1-2.5-2.5l.8-.9-1-2z" fill="currentColor" stroke="none"/></svg>',
+ copy:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="20" height="20"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>',
+ brief:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="3"/><path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7"/></svg>',
+ spark:'<svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 2.5l1.9 5.6 5.6 1.9-5.6 1.9L12 17.5l-1.9-5.6L4.5 10l5.6-1.9z"/></svg>',
+ search:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg>',
+ globe:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="22" height="22" style="color:var(--accent);flex:none"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.5 2.6 2.5 14.4 0 17M12 3.5c-2.5 2.6-2.5 14.4 0 17"/></svg>'
+};
+
+/* ================= vocabulary ================= */
+const CATS=[['media','إعلام وقنوات'],['org','منظمات دولية'],['think','مراكز أبحاث'],['fund','تمويل ومنح'],['biz','شركات وتقنية'],['gov','جهات رسمية'],['edu','تعليم وتدريب'],['ref','مراجع وتوصيات'],['other','أخرى']];
+const CAT=Object.fromEntries(CATS);
+const STAGES=[['idea','فكرة'],['contacted','تواصلت'],['applied','قدّمت'],['interview','مقابلة'],['offer','عرض'],['closed','مغلقة']];
+const STAGE=Object.fromEntries(STAGES);
+const OTYPES=[['job','وظيفة'],['grant','منحة أو تمويل'],['project','مشروع أو تعاون'],['training','تدريب أو زمالة'],['other','أخرى']];
+const OTYPE=Object.fromEntries(OTYPES);
+const REL={3:'قوية',2:'جيدة',1:'باردة'};
+const LOGT={email:'بريد',wa:'واتساب',call:'مكالمة',meet:'لقاء',note:'ملاحظة'};
+const MODELS=[['claude-sonnet-5-5','Sonnet — متوازن (موصى به)'],['claude-haiku-5-5','Haiku — أسرع وأرخص'],['claude-opus-5-5','Opus — الأقوى للبحث المعقد']];
+
+/* ================= default templates ================= */
+const DEFAULT_TPLS=[
+ {id:'t-apply-ar',name:'تقديم على وظيفة',lang:'ar',subject:'طلب التقدم لوظيفة {الفرصة}',body:`الأستاذ/ة {الاسم} المحترم/ة،
+تحية طيبة وبعد،
+
+أتقدم إليكم بطلب الانضمام إلى {الجهة} في وظيفة {الفرصة}.
+
+[سطر واحد عن أبرز إنجاز يناسب هذه الوظيفة بالتحديد]
+
+أرفقت سيرتي الذاتية، ويسعدني ترتيب مكالمة قصيرة في الوقت الذي يناسبكم.
+
+مع خالص التقدير،
+{التوقيع}`},
+ {id:'t-apply-en',name:'Job application (English)',lang:'en',subject:'Application: {الفرصة}',body:`Dear {الاسم},
+
+I am writing to apply for the {الفرصة} position at {الجهة}.
+
+[One line on your most relevant achievement for this role]
+
+My CV is attached. I would welcome a short call at your convenience.
+
+Best regards,
+{التوقيع}`},
+ {id:'t-follow',name:'متابعة بعد التقديم',lang:'ar',subject:'متابعة بخصوص {الفرصة}',body:`الأستاذ/ة {الاسم}،
+تحية طيبة،
+
+أتابع معكم بخصوص طلبي لـ{الفرصة} في {الجهة}، وما زلت مهتمًا جدًا.
+
+إن احتجتم أي معلومات أو نماذج من أعمالي فأنا جاهز لإرسالها فورًا.
+
+شاكرًا وقتكم،
+{التوقيع}`},
+ {id:'t-intro',name:'تعارف وبناء صلة',lang:'ar',subject:'تعارف — {اسمي}',body:`الأستاذ/ة {الاسم}،
+السلام عليكم ورحمة الله،
+
+أتابع عمل {الجهة} وأقدّر ما تقدمونه. أحببت أن أعرّفكم بنفسي: [سطر عنك وعن مجالك الآن].
+
+يسعدني أن نبقى على تواصل، وإن كان لديكم وقت لمكالمة قصيرة فسيكون ذلك مفيدًا لي.
+
+مع التحية،
+{التوقيع}`},
+ {id:'t-collab',name:'عرض تعاون أو مشروع',lang:'ar',subject:'مقترح تعاون مع {الجهة}',body:`الأستاذ/ة {الاسم}،
+تحية طيبة،
+
+لدي مقترح قد يهم {الجهة}: [فكرة المشروع في جملتين].
+
+ما أقترحه عمليًا:
+- [المخرج الأول]
+- [المخرج الثاني]
+- [المدة والكلفة التقريبية]
+
+أرفقت ملخصًا من صفحة واحدة، وأرحب بمناقشته.
+
+مع التقدير،
+{التوقيع}`},
+ {id:'t-ref',name:'طلب توصية أو ترشيح',lang:'ar',subject:'طلب صغير — توصية لـ{الفرصة}',body:`عزيزي/عزيزتي {الاسم}،
+أتمنى أن تكون بخير.
+
+أتقدم حاليًا لـ{الفرصة} لدى {الجهة}، وسيكون لتوصيتك وزن كبير. هل تسمح بذكر اسمك مرجعًا، أو بكتابة سطرين عن عملنا معًا؟
+
+ممتن لك كثيرًا،
+{التوقيع}`},
+ {id:'t-thanks',name:'شكر بعد مقابلة',lang:'ar',subject:'شكرًا على وقتكم — {الفرصة}',body:`الأستاذ/ة {الاسم}،
+
+أشكركم على وقت المقابلة بخصوص {الفرصة}. خرجت منها بصورة أوضح عن عمل {الجهة}، وزاد اهتمامي بالانضمام.
+
+بانتظار الخطوة القادمة،
+{التوقيع}`}
+];
+
+/* ================= examples (only while empty) ================= */
+const EXAMPLES=[
+ {kind:'contact',id:'ex-1',ex:1,type:'person',name:'سارة المنصوري',org:'منصة رقمية خليجية',role:'مديرة المحتوى',cat:'media',country:'الإمارات',email:'sara@example.com',phone:'+971500000000',rel:3,tags:'عن بُعد',notes:'وعدت بإبلاغي بأي شاغر.',last:addDays(T,-12),next:addDays(T,-1),log:[{d:addDays(T,-12),t:'call',s:'مكالمة تعارف، طلبت السيرة الذاتية.'}]},
+ {kind:'contact',id:'ex-2',ex:1,type:'person',name:'أحمد العمري',org:'صندوق دعم المبادرات',role:'مسؤول برامج',cat:'fund',country:'عُمان',email:'ahmed@example.org',rel:2,tags:'منح',last:addDays(T,-40),next:addDays(T,3),log:[]},
+ {kind:'contact',id:'ex-3',ex:1,type:'org',name:'قسم التوظيف',org:'مؤسسة الأفق للأبحاث',cat:'think',country:'قطر',email:'careers@example.org',rel:1,last:addDays(T,-120),log:[]},
+ {kind:'opp',id:'ex-o1',ex:1,otype:'job',title:'محرر محتوى عن بُعد',contactId:'ex-1',org:'منصة رقمية خليجية',stage:'applied',deadline:addDays(T,9),remote:true},
+ {kind:'opp',id:'ex-o2',ex:1,otype:'grant',title:'منحة لمشروع تعليمي رقمي',contactId:'ex-2',org:'صندوق دعم المبادرات',stage:'idea',deadline:addDays(T,25),notes:'تحتاج ملخص مشروع من صفحة.'}
+];
+
+/* ================= store: IndexedDB on the device ================= */
+const S={items:new Map(),loaded:false,tab:'today',q:'',cat:'all',stage:'open',busy:false,status:''};
+const IDB={db:null,
+  open(){return new Promise((res,rej)=>{const r=indexedDB.open('silat',1);r.onupgradeneeded=()=>r.result.createObjectStore('items',{keyPath:'id'});r.onsuccess=()=>{this.db=r.result;res()};r.onerror=()=>rej(r.error)})},
+  tx(mode){return this.db.transaction('items',mode).objectStore('items')},
+  all(){return new Promise((res,rej)=>{const r=this.tx('readonly').getAll();r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})},
+  put(x){return new Promise((res,rej)=>{const r=this.tx('readwrite').put(x);r.onsuccess=()=>res();r.onerror=()=>rej(r.error)})},
+  del(id){return new Promise((res,rej)=>{const r=this.tx('readwrite').delete(id);r.onsuccess=()=>res();r.onerror=()=>rej(r.error)})}};
+let useLS=false;
+async function initStore(){
+  try{await IDB.open();const a=await IDB.all();S.items=new Map(a.map(x=>[x.id,x]))}
+  catch{useLS=true;try{const a=JSON.parse(localStorage.getItem('silat.v1')||'[]');S.items=new Map(a.map(x=>[x.id,x]))}catch{}}
+  S.loaded=true;
+  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch{}
+  render();
+}
+async function put(item,quiet){
+  const clean=JSON.parse(JSON.stringify(item));delete clean.ex;S.items.set(clean.id,clean);
+  try{if(useLS)localStorage.setItem('silat.v1',JSON.stringify([...S.items.values()]));else await IDB.put(clean)}catch{toast('تعذّر الحفظ على الجهاز')}
+  if(!quiet)render();
+}
+async function del(id){S.items.delete(id);try{if(useLS)localStorage.setItem('silat.v1',JSON.stringify([...S.items.values()]));else await IDB.del(id)}catch{}render()}
+const all=k=>[...S.items.values()].filter(x=>x.kind===k);
+const showingExamples=()=>S.loaded&&all('contact').length===0&&all('opp').length===0;
+const contacts=()=>showingExamples()?EXAMPLES.filter(x=>x.kind==='contact'):all('contact');
+const opps=()=>showingExamples()?EXAMPLES.filter(x=>x.kind==='opp'):all('opp');
+const sources=()=>all('source');
+const byId=id=>S.items.get(id)||EXAMPLES.find(x=>x.id===id);
+const DEFAULT_ABOUT='صحفي ومحلل سياسي يمني مقيم في إسطنبول، بخبرة تزيد على 16 عامًا في الصحافة المطبوعة والرقمية والتلفزيونية، ومتخصص في الشأن اليمني والخليجي والشرق أوسطي. عملت مديرًا للتحرير ومنتجًا تلفزيونيًا ومراسلًا برلمانيًا، وأسست منصة «سياق» للتحليل السياسي. أحمل شهادات من RNTC وARIJ وICFJ وIJNet، وتدريبًا في الذكاء الاصطناعي، وأبني تطبيقات ويب بنفسي.\nأبحث عن دخل ثابت أولًا، وأفضّل العمل عن بُعد وبشكل مستقل. منفتح على مجالات خارج الإعلام تقوم على التحليل والبناء ومساعدة الناس، وعلى مشاريع مدرّة للدخل بعيدة عن الاستقطاب السياسي.';
+const settings=()=>Object.assign({myName:'كمال السلامي',myRole:'',myEmail:'kalslami2013@gmail.com',myPhone:'',myLinks:'',about:DEFAULT_ABOUT,followDays:7,topics:'',lastScan:''},S.items.get('settings')||{});
+const AIKEY='silat.ai';
+function aiConf(){try{return Object.assign({key:'',model:'claude-sonnet-5-5'},JSON.parse(localStorage.getItem(AIKEY)||'{}'))}catch{return {key:'',model:'claude-sonnet-5-5'}}}
+function setAiConf(c){try{localStorage.setItem(AIKEY,JSON.stringify(c))}catch{toast('تعذّر حفظ المفتاح')}}
+function templates(){const custom=all('template');const ids=new Set(custom.map(t=>t.id));return [...DEFAULT_TPLS.filter(t=>!ids.has(t.id)),...custom].filter(t=>!t.hidden)}
+const displayName=c=>c?(c.type==='org'?(c.org||c.name):c.name):'';
+const isNew=x=>x&&x.added&&diff(x.added,T)<=7&&(x.src==='claude'||x.src==='ai')&&!x.seen;
+
+/* ================= small renderers ================= */
+function dueChip(iso,label){if(!iso)return '';const d=diff(T,iso);
+  if(d<0)return `<span class="chip late">${label} متأخرة <span class="num">${-d}</span> ي</span>`;
+  if(d===0)return `<span class="chip late">${label} اليوم</span>`;
+  if(d<=7)return `<span class="chip soon">${label} بعد <span class="num">${d}</span> ي</span>`;
+  return `<span class="chip">${label} ${fmt(iso)}</span>`}
+function lastTxt(c){if(!c.last)return 'لم تتواصل بعد';const d=diff(c.last,T);return d===0?'تواصلت اليوم':`آخر تواصل قبل ${d} يوم`}
+function avatar(c,lg){const n=displayName(c);return `<div class="avatar ${c.type==='org'?'org':''} ${lg?'lg':''}" style="${avStyle(n)}">${esc(initial(n))}</div>`}
+function contactCell(c,extra=''){
+  const sub=c.type==='org'?[c.name,c.country].filter(Boolean).join(' · '):[c.role,c.org].filter(Boolean).join(' · ');
+  return `<button class="cell" data-act="openContact" data-id="${esc(c.id)}">${avatar(c)}<div class="body"><div class="t">${esc(displayName(c))}${c.ex?' <span class="chip soon">مثال</span>':''}${isNew(c)?' <span class="chip acc">جديد</span>':''}</div><div class="s">${esc(sub||c.email||'')}</div>${extra?`<div class="chips">${extra}</div>`:''}</div>${chev}</button>`}
+function oppCell(o){const c=byId(o.contactId);
+  return `<button class="cell plain" data-act="openOpp" data-id="${esc(o.id)}"><div class="body"><div class="t">${esc(o.title)}${o.ex?' <span class="chip soon">مثال</span>':''}${isNew(o)?' <span class="chip acc">جديد</span>':''}</div><div class="s">${esc([o.org||(c?displayName(c):''),o.location,o.remote?'عن بُعد':''].filter(Boolean).join(' · '))}</div><div class="chips"><span class="chip">${esc(OTYPE[o.otype]||'فرصة')}</span><span class="chip">${esc(STAGE[o.stage]||'فكرة')}</span>${o.stage!=='closed'?dueChip(o.deadline,'التقديم'):''}</div></div>${chev}</button>`}
+function sourceCell(s){let host='';try{host=new URL(s.url).hostname.replace(/^www\./,'')}catch{}
+  return `<button class="cell plain" data-act="openSource" data-id="${esc(s.id)}"><div class="body"><div class="t">${esc(s.title||host)}${isNew(s)?' <span class="chip acc">جديد</span>':''}</div><div class="s">${esc([host,CAT[s.cat]].filter(Boolean).join(' · '))}</div></div>${chev}</button>`}
+const group=(title,inner,extra='')=>`<section><h2 class="gtitle"><span>${title}</span>${extra}</h2><div class="group">${inner}</div></section>`;
+const exampleBanner=()=>showingExamples()?`<div class="banner"><b>أمثلة توضيحية</b> تختفي عند إضافة أول جهة أو فرصة. أسرع بداية: اطلب من المساعد بحثًا عن فرص، أو استورد نسختك السابقة وجهات Gmail من «المزيد».</div>`:'';
+function filterContacts(list,q){const toks=norm(q).split(/\s+/).filter(Boolean);if(!toks.length)return list;
+  return list.filter(c=>{const h=norm([c.name,c.org,c.role,c.email,c.phone,c.country,c.tags,c.notes,CAT[c.cat]].join(' '));return toks.every(t=>h.includes(t))})}
+
+/* ================= views ================= */
+const TITLES={today:'اليوم',contacts:'الصلات',ai:'المساعد',opps:'الفرص',more:'المزيد'};
+function hello(){const h=new Date().getHours();const n=(settings().myName||'').split(' ')[0];return (h<12?'صباح الخير':'مساء الخير')+(n?'، '+n:'')}
+function viewToday(){
+  const cs=contacts(),os=opps().filter(o=>o.stage!=='closed'),s=settings();
+  const due=cs.filter(c=>c.next&&diff(T,c.next)<=0).sort((a,b)=>a.next.localeCompare(b.next));
+  const week=cs.filter(c=>c.next&&diff(T,c.next)>0&&diff(T,c.next)<=7).sort((a,b)=>a.next.localeCompare(b.next));
+  const dl=os.filter(o=>o.deadline&&diff(T,o.deadline)>=0&&diff(T,o.deadline)<=14).sort((a,b)=>a.deadline.localeCompare(b.deadline));
+  const cold=cs.filter(c=>!c.next&&(!c.last||diff(c.last,T)>=90)).slice(0,5);
+  const fresh=[...all('contact'),...all('opp'),...all('source')].filter(isNew).sort((a,b)=>(b.added||'').localeCompare(a.added||''));
+  const date=new Intl.DateTimeFormat('ar-u-nu-latn',{weekday:'long',day:'numeric',month:'long'}).format(new Date());
+  const scanAge=s.lastScan?diff(s.lastScan,T):null;
+  return `<div class="largetitle"><h1>${esc(hello())}</h1></div><p class="lt-sub">${esc(date)}</p>
+  <div class="stack">${exampleBanner()}
+  <button class="ask" data-act="scan"><span class="spark">${ICON.spark}</span><span><b>ابحث عن فرص جديدة</b>${scanAge===null?'يبحث المساعد في الويب ويؤرشف ما يناسبك':scanAge===0?'آخر بحث اليوم':'آخر بحث قبل '+scanAge+' يوم'}</span></button>
+  <div class="tiles">
+    <button class="tile ${due.length?'red':''}" data-act="scroll" data-to="g-due"><span class="v">${due.length}</span><span class="l">متابعة مستحقة</span></button>
+    <button class="tile ${dl.length?'gold':''}" data-act="scroll" data-to="g-dl"><span class="v">${dl.length}</span><span class="l">موعد تقديم خلال أسبوعين</span></button>
+    <button class="tile acc" data-act="tab" data-to="opps"><span class="v">${os.length}</span><span class="l">فرصة مفتوحة</span></button>
+    <button class="tile" data-act="tab" data-to="contacts"><span class="v">${cs.length}</span><span class="l">صلة في الدفتر</span></button>
+  </div>
+  ${fresh.length?group('أُرشف حديثًا',fresh.slice(0,10).map(x=>x.kind==='contact'?contactCell(x):x.kind==='opp'?oppCell(x):sourceCell(x)).join(''),`<button class="link" data-act="seenAll">تمت المراجعة</button>`):''}
+  <div id="g-due">${group('تواصل معهم اليوم',due.length?due.map(c=>contactCell(c,dueChip(c.next,'متابعة'))).join(''):'<div class="empty">لا متابعات مستحقة. يوم مناسب لفتح باب جديد.</div>')}</div>
+  ${week.length?group('هذا الأسبوع',week.map(c=>contactCell(c,dueChip(c.next,'متابعة'))).join('')):''}
+  <div id="g-dl">${group('مواعيد التقديم القريبة',dl.length?dl.map(oppCell).join(''):'<div class="empty">لا مواعيد نهائية خلال أسبوعين.</div>')}</div>
+  ${cold.length?group('صلات تحتاج إحياء',cold.map(c=>contactCell(c,`<span class="chip">${esc(lastTxt(c))}</span>`)).join('')):''}
+  </div>`}
+function viewContacts(){
+  let cs=contacts();if(S.cat!=='all')cs=cs.filter(c=>c.cat===S.cat);
+  cs=filterContacts(cs,S.q).sort((a,b)=>(b.last||b.added||'').localeCompare(a.last||a.added||''));
+  const used=new Set(contacts().map(c=>c.cat));const withMail=cs.filter(c=>c.email).length;
+  return `<div class="largetitle"><h1>الصلات</h1></div>
+  <div class="stack" style="gap:14px">
+   <div class="search">${ICON.search}<input id="q" type="search" placeholder="اسم، جهة، بلد، إيميل، وسم…" value="${esc(S.q)}" enterkeyhint="search"></div>
+   ${S.q.trim()?`<button class="ask" data-act="askAI" data-q="${esc('ابحث في دفتري عن: '+S.q)}"><span class="spark">${ICON.spark}</span><span>بحث ذكي عن «${esc(S.q)}» بالمساعد</span></button>`:''}
+   <div class="seg"><button class="pill" data-act="cat" data-cat="all" aria-pressed="${S.cat==='all'}">الكل<span class="n">${contacts().length}</span></button>${CATS.filter(([k])=>used.has(k)).map(([k,v])=>`<button class="pill" data-act="cat" data-cat="${k}" aria-pressed="${S.cat===k}">${v}<span class="n">${contacts().filter(c=>c.cat===k).length}</span></button>`).join('')}</div>
+   ${exampleBanner()}
+   <div class="group">${cs.length?cs.map(c=>contactCell(c,[c.next?dueChip(c.next,'متابعة'):'',...(c.tags||'').split(/[,،]/).map(t=>t.trim()).filter(Boolean).slice(0,2).map(t=>`<span class="chip">${esc(t)}</span>`)].join(''))).join(''):'<div class="empty">لا نتائج.</div>'}</div>
+   ${withMail>1?`<button class="btn wide" data-act="bulk">رسالة مخصصة لكل من في القائمة (${withMail})</button>`:''}
+  </div>`}
+function viewOpps(){
+  const os=opps();const counts=Object.fromEntries(STAGES.map(([k])=>[k,os.filter(o=>(o.stage||'idea')===k).length]));
+  const list=(S.stage==='open'?os.filter(o=>o.stage!=='closed'):os.filter(o=>(o.stage||'idea')===S.stage)).sort((a,b)=>(a.deadline||'9999').localeCompare(b.deadline||'9999'));
+  return `<div class="largetitle"><h1>الفرص</h1></div>
+  <div class="stack" style="gap:14px">
+   <div class="seg"><button class="pill" data-act="stage" data-s="open" aria-pressed="${S.stage==='open'}">المفتوحة<span class="n">${os.filter(o=>o.stage!=='closed').length}</span></button>${STAGES.map(([k,v])=>`<button class="pill" data-act="stage" data-s="${k}" aria-pressed="${S.stage===k}">${v}<span class="n">${counts[k]}</span></button>`).join('')}</div>
+   ${exampleBanner()}
+   <div class="group">${list.length?list.map(oppCell).join(''):'<div class="empty">لا فرص هنا. اطلب من المساعد أن يبحث لك.</div>'}</div>
+  </div>`}
+function viewMore(){const s=settings(),ai=aiConf();
+  return `<div class="largetitle"><h1>المزيد</h1></div>
+  <div class="stack">
+   ${group('المصادر والمواقع',(sources().length?sources().sort((a,b)=>(b.added||'').localeCompare(a.added||'')).map(sourceCell).join(''):'<div class="empty">مواقع التوظيف والأدلة وصفحات المنح… تُحفظ هنا.</div>')+`<button class="cell plain" data-act="newSource"><div class="body" style="color:var(--accent)">إضافة مصدر</div></button>`)}
+   ${group('قوالب الرسائل',templates().map(t=>`<button class="cell plain" data-act="editTpl" data-id="${t.id}"><div class="body"><div class="t">${esc(t.name)}</div><div class="s">${esc(t.subject)}</div></div><span class="chip">${t.lang==='en'?'EN':'ع'}</span>${chev}</button>`).join('')+`<button class="cell plain" data-act="newTpl"><div class="body" style="color:var(--accent)">قالب جديد</div></button>`)}
+   ${group('الإعدادات',`<button class="cell plain" data-act="editMe"><div class="body"><div class="t">${esc(s.myName||'اسمك')}</div><div class="s">التوقيع، النبذة، مجالات البحث، المتابعة</div></div>${chev}</button>
+     <button class="cell plain" data-act="editAI"><div class="body"><div class="t">المساعد الذكي</div><div class="s">${ai.key?'مفعّل · '+esc((MODELS.find(m=>m[0]===ai.model)||MODELS[0])[1].split(' —')[0]):'غير مفعّل — يحتاج مفتاح API'}</div></div>${ai.key?'<span class="chip ok">مفعّل</span>':'<span class="chip soon">إعداد</span>'}${chev}</button>`)}
+   ${group('البيانات',`<button class="cell plain" data-act="exportJson"><div class="body">نسخة احتياطية كاملة</div>${chev}</button><button class="cell plain" data-act="exportCsv"><div class="body">تصدير الجهات (CSV)</div>${chev}</button><label class="cell plain" for="imp"><div class="body">استيراد نسخة سابقة أو جهات Gmail (CSV)</div>${chev}</label>`)}
+   <input id="imp" type="file" accept=".csv,.json,text/csv,application/json" hidden>
+   <p class="hint">كل بياناتك محفوظة على هذا الجهاز فقط، ولا تُرسل لأي خادم. ما يذهب إلى Anthropic هو فقط ما تكتبه للمساعد وما يحتاجه من دفترك للإجابة. خذ نسخة احتياطية كل أسبوع واحفظها في «الملفات» أو iCloud.</p>
+   ${!isStandalone()?group('ثبّت التطبيق',`<div class="cell plain" style="cursor:default"><div class="body"><div style="font-size:15px">في Safari: اضغط زر المشاركة ثم «إضافة إلى الشاشة الرئيسية». افتح الدفتر دائمًا من الأيقونة، فهكذا يحفظ iOS بياناتك بشكل دائم.</div></div></div>`):''}
+   <p class="hint" style="text-align:center">دفتر الصلات · الإصدار 1</p>
+  </div>`}
+const isStandalone=()=>window.navigator.standalone===true||matchMedia('(display-mode: standalone)').matches;
+
+/* ================= assistant view ================= */
+const SUGG=[
+ ['ابحث عن فرص لي','يبحث في الويب ويؤرشف','scan'],
+ ['الصق إعلانًا أو صفحة','أستخرج الجهة والإيميل والموعد','استخرج كل الجهات والإيميلات والأرقام والفرص من النص التالي واحفظها في الدفتر:\n\n',1],
+ ['من أتابع هذا الأسبوع؟','مرتّبون حسب الأولوية','من عليّ متابعته هذا الأسبوع؟ رتبهم حسب الأولوية واقترح جملة افتتاحية لكل واحد.'],
+ ['جهات تموّل المشاريع','ابحث وأرشف أهمها','ابحث في الويب عن جهات ومنح مفتوحة حاليًا تموّل مشاريع إعلامية أو تعليمية رقمية في العالم العربي، واحفظ كل منحة بموعدها ورابطها، والجهة المانحة بإيميلها إن وُجد.'],
+ ['رسالة إحياء صلة','لشخص من دفتري','اختر من دفتري شخصًا لم أتواصل معه منذ مدة، واكتب له رسالة إحياء صلة قصيرة.']
+];
+function chatDoc(){return S.items.get('chat')||{kind:'chat',id:'chat',msgs:[]}}
+function renderMsgText(t){let h=esc(t);h=h.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');h=h.replace(/(https?:\/\/[^\s<)]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>');return h}
+function msgHTML(m,i){
+  if(m.r==='u')return `<div class="msg u">${m.imgs?`<span style="opacity:.8;font-size:13px">صورة مرفقة (${m.imgs})</span>\n`:''}${esc(m.t)}</div>`;
+  let h=`<div class="msg a ${m.thinking?'thinking':''}">${m.thinking?esc(m.status||'يفكر')+'<span class="dots"><i></i><i></i><i></i></span>':renderMsgText(m.t||'')}</div>`;
+  const extras=[];
+  if(m.saved&&m.saved.length){const seen=new Set();const cells=m.saved.filter(s=>!seen.has(s.id)&&seen.add(s.id)).map(s=>{const x=byId(s.id);if(!x)return '';return x.kind==='contact'?contactCell(x,`<span class="chip ok">${s.action==='updated'?'حُدّث':'أُرشف'}</span>`):x.kind==='opp'?oppCell(x):sourceCell(x)}).join('');if(cells)extras.push(`<div class="group">${cells}</div>`)}
+  if(m.draft){const c=m.draft.contact_id&&byId(m.draft.contact_id);extras.push(`<div class="group"><div class="cell plain" style="cursor:default"><div class="body"><div class="t">${esc(m.draft.subject)}</div><div class="s" style="white-space:pre-wrap;max-height:110px;overflow:hidden">${esc(m.draft.body)}</div></div></div><button class="cell plain" data-act="openDraft" data-i="${i}"><div class="body" style="color:var(--accent);font-weight:600">افتح الرسالة${c?' لـ'+esc(displayName(c)):''}</div>${chev}</button></div>`)}
+  if(m.cites&&m.cites.length)extras.push(`<section><h2 class="gtitle">المصادر</h2><div class="group">${m.cites.map(l=>{let host='';try{host=new URL(l.url).hostname.replace(/^www\./,'')}catch{}return `<a class="cell plain" href="${esc(l.url)}" target="_blank" rel="noopener">${ICON.globe}<div class="body"><div class="t" style="font-weight:500;font-size:15px">${esc(l.title||host)}</div><div class="s">${esc(host)}</div></div>${chev}</a>`}).join('')}</div></section>`);
+  if(m.usage)extras.push(`<p class="hint" style="margin:0 6px">${m.usage}</p>`);
+  if(extras.length)h+=`<div class="attach">${extras.join('')}</div>`;
+  return h}
+function viewAI(){
+  const msgs=chatDoc().msgs;const ai=aiConf();
+  return `<div class="largetitle"><h1>المساعد</h1>${msgs.length&&!S.busy?'<button class="link" data-act="clearChat" style="font-size:16px;padding-bottom:8px">محادثة جديدة</button>':''}</div>
+  <div class="stack" style="gap:12px">
+  ${!ai.key?`<div class="banner"><b>فعّل المساعد</b> بإضافة مفتاح Anthropic API مرة واحدة. يُحفظ على جهازك فقط.<div style="margin-top:8px"><button class="btn sm" data-act="editAI" style="background:var(--card)">إعداد المساعد</button></div></div>`:''}
+  ${!msgs.length?`<p class="lt-sub" style="margin:0">يبحث في الويب عن الفرص والجهات، ويؤرشف الإيميلات والأرقام والمواعيد في دفترك، ويقرأ الصور والإعلانات، ويكتب رسائلك.</p>
+  <div class="suggest">${SUGG.map((s,i)=>`<button class="sugg" data-act="sugg" data-i="${i}"><b>${s[0]}</b><span>${s[1]}</span></button>`).join('')}</div>`:''}
+  <div class="msgs" id="msgs">${msgs.map(msgHTML).join('')}</div></div>`}
+
+/* ================= render ================= */
+function render(){
+  T=todayISO();
+  document.querySelectorAll('.tb').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===S.tab));
+  const due=contacts().filter(c=>c.next&&diff(T,c.next)<=0).length;const b=$('#bToday');b.hidden=!due;b.textContent=due;
+  try{if(navigator.setAppBadge){due?navigator.setAppBadge(due):navigator.clearAppBadge()}}catch{}
+  $('#mini').textContent=TITLES[S.tab];
+  $('#store').className='store'+(navigator.onLine?'':' off');$('#store').lastElementChild.textContent=navigator.onLine?'على جهازك':'دون اتصال';
+  $('#topAct').style.visibility=(S.tab==='ai'||S.tab==='more')?'hidden':'visible';
+  $('#composer').hidden=S.tab!=='ai';$('#main').classList.toggle('chatmode',S.tab==='ai');
+  const v=$('#view');const ae=document.activeElement;const keepQ=ae&&ae.id==='q';const pos=keepQ?ae.selectionStart:0;
+  v.innerHTML={today:viewToday,contacts:viewContacts,opps:viewOpps,more:viewMore,ai:viewAI}[S.tab]();
+  if(keepQ){const q=$('#q');if(q){q.focus();try{q.setSelectionRange(pos,pos)}catch{}}}
+  updSend();
+  if(sheetRefresh&&sheet.open)sheetRefresh();
+}
+function scrollChatEnd(){if(S.tab==='ai')window.scrollTo({top:document.body.scrollHeight})}
+window.addEventListener('scroll',()=>$('#topbar').classList.toggle('scrolled',scrollY>40),{passive:true});
+window.addEventListener('online',render);window.addEventListener('offline',render);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&todayISO()!==T)render()});
+
+/* ================= sheet plumbing ================= */
+const sheet=$('#sheet');let sheetRefresh=null;
+function openSheet(title,body,{left='',right='',refresh=null}={}){
+  const keep=sheet.open&&$('#shB')?$('#shB').scrollTop:0;
+  $('#shIn').innerHTML=`<div class="sh-h pad"><div class="a">${left||'<button class="link" data-act="close" style="font-size:17px">إغلاق</button>'}</div><h2>${title}</h2><div class="a end">${right}</div></div><div class="sh-b pad" id="shB">${body}</div>`;
+  sheetRefresh=refresh;if(!sheet.open)sheet.showModal();else $('#shB').scrollTop=keep;}
+function closeSheet(){sheetRefresh=null;if(sheet.open)sheet.close()}
+sheet.addEventListener('close',()=>{sheetRefresh=null});
+sheet.addEventListener('click',e=>{if(e.target===sheet)closeSheet()});
+const F=(label,inner,col)=>`<div class="field ${col?'col':''}"><label>${label}</label>${inner}</div>`;
+const typing=()=>{const ae=document.activeElement;return ae&&ae.closest&&ae.closest('#sheet')&&/INPUT|TEXTAREA|SELECT/.test(ae.tagName)};
+
+/* contact detail */
+function openContact(id){
+  const c=byId(id);if(!c){closeSheet();return}
+  if(isNew(c))put({...c,seen:true},true);
+  const myOpps=opps().filter(o=>o.contactId===id);
+  const rows=[];
+  if(c.type==='person'&&(c.org||c.role))rows.push(['الجهة',esc([c.role,c.org].filter(Boolean).join('، '))]);
+  if(c.type==='org'&&c.name)rows.push(['القسم',esc(c.name)]);
+  if(c.email)rows.push(['البريد',`<a class="ltr" href="mailto:${esc(c.email)}" style="color:var(--accent);text-decoration:none">${esc(c.email)}</a>`,c.email]);
+  if(c.phone)rows.push(['الهاتف',`<a class="ltr num" href="tel:${esc(c.phone.replace(/[^\d+]/g,''))}" style="color:var(--accent);text-decoration:none">${esc(c.phone)}</a>`,c.phone]);
+  (c.links||'').split(/\s+/).filter(Boolean).forEach(u=>rows.push(['رابط',`<a class="ltr" href="${esc(/^https?:/.test(u)?u:'https://'+u)}" target="_blank" rel="noopener" style="color:var(--accent)">${esc(u.replace(/^https?:\/\/(www\.)?/,''))}</a>`]));
+  rows.push(['التصنيف',esc([CAT[c.cat],c.country].filter(Boolean).join(' · ')||'—')]);
+  rows.push(['العلاقة',esc((REL[c.rel]||'—')+' · '+lastTxt(c))]);
+  if(c.tags)rows.push(['وسوم',esc(c.tags)]);
+  if(c.source)rows.push(['المصدر',/^https?:/.test(c.source)?`<a href="${esc(c.source)}" target="_blank" rel="noopener" style="color:var(--accent)">فتح المصدر</a>`:esc(c.source)]);
+  const tel=c.phone?c.phone.replace(/[^\d+]/g,''):'';
+  openSheet('',`
+   <div class="hero">${avatar(c,1)}<h3>${esc(displayName(c))}</h3><p>${esc(c.type==='org'?(CAT[c.cat]||''):[c.role,c.org].filter(Boolean).join(' · '))}</p>${c.next?dueChip(c.next,'متابعة'):''}</div>
+   <div class="actions">
+     <button class="act ${c.email?'':'off'}" data-act="compose" data-id="${esc(id)}">${ICON.mail}بريد</button>
+     <a class="act ${tel?'':'off'}" href="${tel?'tel:'+esc(tel):'#'}">${ICON.phone}اتصال</a>
+     <a class="act ${tel?'':'off'}" href="${tel?'https://wa.me/'+esc(tel.replace(/\D/g,'')):'#'}" target="_blank" rel="noopener">${ICON.wa}واتساب</a>
+     <button class="act" data-act="newOpp" data-cid="${esc(id)}">${ICON.brief}فرصة</button>
+   </div>
+   <div class="group">${rows.map(r=>`<div class="cell plain" style="cursor:default"><div class="body"><div class="s" style="font-size:13px">${r[0]}</div><div style="overflow-wrap:anywhere">${r[1]}</div></div>${r[2]?`<button class="iconbtn" data-act="copy" data-v="${esc(r[2])}" aria-label="نسخ">${ICON.copy}</button>`:''}</div>`).join('')}</div>
+   ${c.notes?`<section><h2 class="gtitle">ملاحظات</h2><div class="preview" style="max-height:none">${esc(c.notes)}</div></section>`:''}
+   ${myOpps.length?group('الفرص المرتبطة',myOpps.map(oppCell).join('')):''}
+   <section><h2 class="gtitle">سجل التواصل</h2><div class="group">
+     <div class="field"><select id="logT" style="flex:none;width:auto">${Object.entries(LOGT).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}</select><input id="logS" placeholder="ماذا حدث؟"><button class="btn sm" data-act="addLog" data-id="${esc(id)}">سجّل</button></div>
+     <div class="field"><label>المتابعة</label><input id="nextD" type="date" value="${esc(c.next||'')}"><button class="btn sm" data-act="setNext" data-id="${esc(id)}">حفظ</button></div>
+     <div class="log">${(c.log||[]).slice().reverse().map(l=>`<div class="e"><div class="d num">${fmt(l.d)} · ${LOGT[l.t]||''}</div>${esc(l.s)}</div>`).join('')||'<div class="e" style="color:var(--muted)">لا شيء مسجل بعد.</div>'}</div>
+   </div></section>
+   <div class="grid2"><button class="btn" data-act="vcard" data-id="${esc(id)}">حفظ في جهات الآيفون</button><button class="btn" data-act="ics" data-id="${esc(id)}" ${c.next?'':'disabled'}>تذكير في التقويم</button></div>
+   <button class="btn wide" data-act="askAI" data-q="${esc('اقرأ ما في دفتري عن '+displayName(c)+' (id: '+id+') واقترح خطوتي القادمة معه، ثم جهّز رسالة مناسبة.')}">اسأل المساعد عن الخطوة التالية</button>
+   ${c.ex?'':`<button class="btn wide red" data-act="askDel" data-id="${esc(id)}">حذف</button>`}`,
+  {right:`<button class="link" data-act="editContact" data-id="${esc(id)}" style="font-size:17px">تعديل</button>`,refresh:()=>{if(!typing())openContact(id)}});
+}
+/* contact form */
+function editContact(id){
+  const c=id?byId(id):{kind:'contact',id:newId('c'),type:'person',rel:2,cat:'other',log:[],added:T};
+  editContact.base=c;
+  openSheet(id?'تعديل':'صلة جديدة',`
+   <div class="seg" style="justify-content:center"><button class="pill" data-act="ctype" data-v="person" aria-pressed="${c.type!=='org'}">شخص</button><button class="pill" data-act="ctype" data-v="org" aria-pressed="${c.type==='org'}">جهة أو مؤسسة</button></div>
+   <input type="hidden" id="cType" value="${c.type||'person'}">
+   <div class="group">
+    ${F('<span id="lName">'+(c.type==='org'?'القسم':'الاسم')+'</span>',`<input id="cName" value="${esc(c.name)}" placeholder="${c.type==='org'?'مثال: التوظيف':'الاسم الكامل'}">`)}
+    ${F('الجهة',`<input id="cOrg" value="${esc(c.org)}">`)}
+    ${F('المنصب',`<input id="cRole" value="${esc(c.role)}">`)}
+   </div>
+   <div class="group">
+    ${F('البريد',`<input id="cEmail" type="email" inputmode="email" autocapitalize="off" autocorrect="off" value="${esc(c.email)}" class="ltr">`)}
+    ${F('الهاتف',`<input id="cPhone" type="tel" value="${esc(c.phone)}" placeholder="+90…" class="ltr">`)}
+    ${F('روابط',`<input id="cLinks" value="${esc(c.links)}" placeholder="linkedin.com/in/…" class="ltr" autocapitalize="off" autocorrect="off">`)}
+   </div>
+   <div class="group">
+    ${F('التصنيف',`<select id="cCat">${CATS.map(([k,v])=>`<option value="${k}" ${c.cat===k?'selected':''}>${v}</option>`).join('')}</select>`)}
+    ${F('البلد',`<input id="cCountry" value="${esc(c.country)}">`)}
+    ${F('العلاقة',`<select id="cRel">${[3,2,1].map(n=>`<option value="${n}" ${+c.rel===n?'selected':''}>${REL[n]}</option>`).join('')}</select>`)}
+    ${F('وسوم',`<input id="cTags" value="${esc(c.tags)}" placeholder="عن بُعد، منح…">`)}
+   </div>
+   <div class="group">
+    ${F('آخر تواصل',`<input id="cLast" type="date" value="${esc(c.last||'')}">`)}
+    ${F('المتابعة',`<input id="cNext" type="date" value="${esc(c.next||'')}">`)}
+   </div>
+   <div class="group">${F('ملاحظات',`<textarea id="cNotes" rows="3" placeholder="كيف تعرفت عليه، ماذا يهمه، ماذا وعد">${esc(c.notes)}</textarea>`,1)}</div>`,
+   {left:`<button class="link" data-act="${id?'openContact':'close'}" data-id="${esc(id||'')}" style="font-size:17px">إلغاء</button>`,right:`<button class="link" data-act="saveContact" style="font-size:17px;font-weight:600">حفظ</button>`});
+}
+function readContact(){const b=editContact.base,v=k=>$('#'+k).value.trim();
+  return {...b,type:v('cType'),name:v('cName'),org:v('cOrg'),role:v('cRole'),cat:v('cCat'),email:v('cEmail'),phone:v('cPhone'),country:v('cCountry'),rel:+v('cRel'),links:v('cLinks'),tags:v('cTags'),last:v('cLast'),next:v('cNext'),notes:$('#cNotes').value}}
+
+/* opportunity */
+function openOpp(id){const o=byId(id);if(!o){closeSheet();return}if(isNew(o))put({...o,seen:true},true);const c=byId(o.contactId);
+  openSheet('الفرصة',`
+   <div class="hero" style="align-items:flex-start;text-align:start"><div class="chips"><span class="chip">${esc(OTYPE[o.otype]||'فرصة')}</span>${o.remote?'<span class="chip acc">عن بُعد</span>':''}${o.stage!=='closed'?dueChip(o.deadline,'التقديم'):''}</div><h3>${esc(o.title)}</h3><p>${esc([o.org,o.location].filter(Boolean).join(' · '))}</p></div>
+   <div class="seg">${STAGES.map(([k,v])=>`<button class="pill" data-act="setStage" data-id="${esc(id)}" data-s="${k}" aria-pressed="${(o.stage||'idea')===k}">${v}</button>`).join('')}</div>
+   <div class="group">
+    ${o.deadline?`<div class="cell plain" style="cursor:default"><div class="body"><div class="s" style="font-size:13px">آخر موعد</div>${fmt(o.deadline)}</div></div>`:''}
+    ${o.email?`<div class="cell plain" style="cursor:default"><div class="body"><div class="s" style="font-size:13px">بريد التقديم</div><span class="ltr">${esc(o.email)}</span></div><button class="iconbtn" data-act="copy" data-v="${esc(o.email)}">${ICON.copy}</button></div>`:''}
+    ${o.link?`<a class="cell plain" href="${esc(o.link)}" target="_blank" rel="noopener"><div class="body" style="color:var(--accent)">فتح الإعلان</div>${chev}</a>`:''}
+    ${o.source&&/^https?:/.test(o.source)&&o.source!==o.link?`<a class="cell plain" href="${esc(o.source)}" target="_blank" rel="noopener"><div class="body" style="color:var(--accent)">فتح المصدر</div>${chev}</a>`:''}
+    ${c?contactCell(c):''}
+    ${!o.deadline&&!o.email&&!o.link&&!c?'<div class="empty">أضف الموعد والرابط والشخص من «تعديل».</div>':''}
+   </div>
+   ${o.notes?`<section><h2 class="gtitle">ملاحظات</h2><div class="preview" style="max-height:none">${esc(o.notes)}</div></section>`:''}
+   ${(c&&c.email)||o.email?`<button class="btn pri wide" data-act="composeOpp" data-id="${esc(id)}">اكتب رسالة بخصوصها</button>`:''}
+   ${o.deadline?`<button class="btn wide" data-act="icsOpp" data-id="${esc(id)}">تذكير بموعد التقديم في التقويم</button>`:''}
+   <button class="btn wide" data-act="askAI" data-q="${esc('ساعدني في التقدم لهذه الفرصة (id: '+id+'): '+o.title+(o.org?' لدى '+o.org:'')+'. ابحث عنها وعن الجهة إن احتجت، هل تناسبني؟ ماذا أبرز من خبرتي؟ وجهّز رسالة التقديم.')}">اسأل المساعد عنها</button>
+   ${o.ex?'':`<button class="btn wide red" data-act="askDel" data-id="${esc(id)}">حذف</button>`}`,
+  {right:`<button class="link" data-act="editOpp" data-id="${esc(id)}" style="font-size:17px">تعديل</button>`,refresh:()=>{if(!typing())openOpp(id)}});
+}
+function editOpp(id,cid){
+  const o=id?byId(id):{kind:'opp',id:newId('o'),otype:'job',stage:'idea',contactId:cid||'',org:cid?(byId(cid)||{}).org||'':'',added:T};
+  editOpp.base=o;const cs=contacts();
+  openSheet(id?'تعديل الفرصة':'فرصة جديدة',`
+   <div class="group">
+    ${F('العنوان',`<input id="oTitle" value="${esc(o.title)}" placeholder="مثال: محلل محتوى">`)}
+    ${F('النوع',`<select id="oType">${OTYPES.map(([k,v])=>`<option value="${k}" ${o.otype===k?'selected':''}>${v}</option>`).join('')}</select>`)}
+    ${F('الجهة',`<input id="oOrg" value="${esc(o.org)}">`)}
+    ${F('المكان',`<input id="oLoc" value="${esc(o.location)}">`)}
+    ${F('عن بُعد',`<select id="oRemote"><option value="">غير محدد</option><option value="1" ${o.remote===true?'selected':''}>نعم</option><option value="0" ${o.remote===false?'selected':''}>لا</option></select>`)}
+   </div>
+   <div class="group">
+    ${F('المرحلة',`<select id="oStage">${STAGES.map(([k,v])=>`<option value="${k}" ${o.stage===k?'selected':''}>${v}</option>`).join('')}</select>`)}
+    ${F('آخر موعد',`<input id="oDeadline" type="date" value="${esc(o.deadline||'')}">`)}
+    ${F('الشخص',`<select id="oContact"><option value="">—</option>${cs.map(c=>`<option value="${esc(c.id)}" ${o.contactId===c.id?'selected':''}>${esc(displayName(c))}</option>`).join('')}</select>`)}
+    ${F('بريد التقديم',`<input id="oEmail" type="email" class="ltr" value="${esc(o.email)}" autocapitalize="off" autocorrect="off">`)}
+    ${F('الرابط',`<input id="oLink" type="url" class="ltr" value="${esc(o.link)}" autocapitalize="off" autocorrect="off">`)}
+   </div>
+   <div class="group">${F('ملاحظات',`<textarea id="oNotes" rows="4" placeholder="المتطلبات، الراتب، ما أرسلته">${esc(o.notes)}</textarea>`,1)}</div>`,
+   {left:`<button class="link" data-act="${id?'openOpp':'close'}" data-id="${esc(id||'')}" style="font-size:17px">إلغاء</button>`,right:`<button class="link" data-act="saveOpp" style="font-size:17px;font-weight:600">حفظ</button>`});
+}
+/* source */
+function editSource(id){const s=id?byId(id):{kind:'source',id:newId('s'),cat:'other',added:T};editSource.base=s;if(id&&isNew(s))put({...s,seen:true},true);
+  openSheet(id?'المصدر':'مصدر جديد',`
+   ${id&&s.url?`<a class="btn pri wide" href="${esc(s.url)}" target="_blank" rel="noopener">فتح الموقع</a>`:''}
+   <div class="group">${F('الاسم',`<input id="sTitle" value="${esc(s.title)}" placeholder="مثال: بوابة وظائف">`)}${F('الرابط',`<input id="sUrl" type="url" class="ltr" value="${esc(s.url)}" autocapitalize="off" autocorrect="off">`)}${F('التصنيف',`<select id="sCat">${CATS.map(([k,v])=>`<option value="${k}" ${s.cat===k?'selected':''}>${v}</option>`).join('')}</select>`)}</div>
+   <div class="group">${F('ملاحظات',`<textarea id="sNotes" rows="3" placeholder="ماذا تجد فيه، وكل كم تراجعه">${esc(s.notes)}</textarea>`,1)}</div>
+   ${id?`<button class="btn wide red" data-act="askDel" data-id="${esc(id)}">حذف</button>`:''}`,
+   {right:`<button class="link" data-act="saveSource" style="font-size:17px;font-weight:600">حفظ</button>`});
+}
+/* templates */
+function editTpl(id){
+  const t=id?templates().find(x=>x.id===id):{kind:'template',id:newId('t'),lang:'ar',name:'',subject:'',body:''};
+  const isDefault=DEFAULT_TPLS.some(d=>d.id===t.id);
+  openSheet(id?'القالب':'قالب جديد',`
+   <div class="group">${F('الاسم',`<input id="tName" value="${esc(t.name)}">`)}${F('اللغة',`<select id="tLang"><option value="ar" ${t.lang!=='en'?'selected':''}>عربي</option><option value="en" ${t.lang==='en'?'selected':''}>English</option></select>`)}${F('الموضوع',`<input id="tSubj" value="${esc(t.subject)}" dir="auto">`)}</div>
+   <div class="group">${F('النص',`<textarea id="tBody" rows="12" dir="auto">${esc(t.body)}</textarea>`,1)}</div>
+   <div class="seg">${['{الاسم}','{الجهة}','{المنصب}','{الفرصة}','{اسمي}','{التوقيع}'].map(p=>`<button class="pill" data-act="insPh" data-v="${p}">${p}</button>`).join('')}</div>
+   <p class="hint" style="margin:0">الحقول بين { } تُملأ لكل مستلم، وما بين [ ] تذكير تكمله بنفسك.</p>
+   ${id?`<button class="btn wide red" data-act="hideTpl" data-id="${esc(t.id)}">${isDefault?'إخفاء القالب':'حذف القالب'}</button>`:''}`,
+   {right:`<button class="link" data-act="saveTpl" data-id="${esc(t.id)}" style="font-size:17px;font-weight:600">حفظ</button>`});
+}
+/* me */
+function signature(s){return [s.myName,s.myRole,s.myEmail,s.myPhone,s.myLinks].filter(Boolean).join('\n')}
+function editMe(){const s=settings();
+  openSheet('الإعدادات',`
+   <div class="group">${F('الاسم',`<input id="mName" value="${esc(s.myName)}">`)}${F('الصفة',`<input id="mRole" value="${esc(s.myRole)}" placeholder="كما تريدها في التوقيع">`)}${F('البريد',`<input id="mEmail" type="email" class="ltr" value="${esc(s.myEmail)}" autocapitalize="off">`)}${F('الهاتف',`<input id="mPhone" type="tel" class="ltr" value="${esc(s.myPhone)}">`)}${F('روابط',`<input id="mLinks" class="ltr" value="${esc(s.myLinks)}" autocapitalize="off">`)}</div>
+   <section><h2 class="gtitle">التوقيع كما سيظهر</h2><div class="preview" id="sigPrev">${esc(signature(s))}</div></section>
+   <div class="group">${F('نبذة للمساعد',`<textarea id="mAbout" rows="7">${esc(s.about)}</textarea>`,1)}</div>
+   <div class="group">${F('مجالات البحث عن الفرص',`<textarea id="mTopics" rows="4" placeholder="مثال: تحليل محتوى عن بُعد، إدارة مشاريع رقمية، تدريب صحفي، منح للمشاريع التعليمية، وظائف بحثية في مراكز الأبحاث">${esc(s.topics)}</textarea>`,1)}</div>
+   <p class="hint" style="margin:0">يستعمل المساعد النبذة والمجالات حين تضغط «ابحث عن فرص جديدة».</p>
+   <div class="group">${F('المتابعة',`<select id="mFollow">${[0,3,5,7,14,30].map(n=>`<option value="${n}" ${+s.followDays===n?'selected':''}>${n?'بعد '+n+' أيام من كل رسالة':'بلا متابعة تلقائية'}</option>`).join('')}</select>`)}</div>`,
+   {right:`<button class="link" data-act="saveMe" style="font-size:17px;font-weight:600">حفظ</button>`});
+}
+function editAI(){const a=aiConf();
+  openSheet('المساعد الذكي',`
+   <div class="group">${F('مفتاح API',`<input id="aKey" type="password" class="ltr" value="${esc(a.key)}" placeholder="sk-ant-…" autocapitalize="off" autocorrect="off" spellcheck="false">`)}${F('النموذج',`<select id="aModel">${MODELS.map(([k,v])=>`<option value="${k}" ${a.model===k?'selected':''}>${v}</option>`).join('')}</select>`)}</div>
+   <div class="grid2"><button class="btn pri" data-act="saveAI">حفظ</button><button class="btn" data-act="testAI">اختبار</button></div>
+   <div id="aiTest"></div>
+   <section><h2 class="gtitle">كيف تحصل على المفتاح</h2><div class="group"><div class="cell plain" style="cursor:default"><div class="body" style="font-size:15px;line-height:1.7">1. افتح <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" style="color:var(--accent)">console.anthropic.com</a> وسجّل الدخول.<br>2. من Billing أضف رصيدًا صغيرًا (5 أو 10 دولارات تكفي لأسابيع من الاستعمال العادي).<br>3. من Limits ضع حدًا شهريًا للإنفاق حتى لا تفاجأ.<br>4. من API Keys أنشئ مفتاحًا، انسخه والصقه هنا.</div></div></div></section>
+   <p class="hint" style="margin:0">المفتاح محفوظ على هذا الجهاز فقط ولا يدخل في النسخ الاحتياطية. كل عملية بحث في الويب تكلّف نحو سنت واحد، إضافة إلى كلفة النص. لا تشارك المفتاح مع أحد.</p>
+   ${a.key?`<button class="btn wide red" data-act="clearAI">إزالة المفتاح</button>`:''}`);
+}
+
+/* ================= files: share, vCard, calendar ================= */
+async function shareFile(name,text,mime){
+  const blob=new Blob([text],{type:mime});
+  try{const f=new File([blob],name,{type:mime});if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:name});return}}catch(e){if(e&&e.name==='AbortError')return}
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);
+}
+const vEsc=s=>String(s||'').replace(/\\/g,'\\\\').replace(/\n/g,'\\n').replace(/([,;])/g,'\\$1');
+function vcard(c){const L=['BEGIN:VCARD','VERSION:3.0'];
+  if(c.type==='org'){L.push('FN:'+vEsc(c.org||c.name),'ORG:'+vEsc(c.org)+(c.name?';'+vEsc(c.name):''),'X-ABShowAs:COMPANY')}
+  else{const parts=(c.name||'').trim().split(/\s+/);L.push('FN:'+vEsc(c.name),'N:'+vEsc(parts.slice(1).join(' '))+';'+vEsc(parts[0]||'')+';;;');if(c.org)L.push('ORG:'+vEsc(c.org));if(c.role)L.push('TITLE:'+vEsc(c.role))}
+  if(c.email)L.push('EMAIL;TYPE=INTERNET:'+c.email);if(c.phone)L.push('TEL;TYPE=CELL:'+c.phone);
+  (c.links||'').split(/\s+/).filter(Boolean).forEach(u=>L.push('URL:'+(/^https?:/.test(u)?u:'https://'+u)));
+  if(c.notes)L.push('NOTE:'+vEsc(c.notes));L.push('END:VCARD');return L.join('\r\n')}
+function ics(title,date,notes){const d=date.replace(/-/g,''),e=addDays(date,1).replace(/-/g,'');const st=new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d+/,'');
+  return ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Silat//AR','BEGIN:VEVENT','UID:'+newId('e')+'@silat','DTSTAMP:'+st,'DTSTART;VALUE=DATE:'+d,'DTEND;VALUE=DATE:'+e,'SUMMARY:'+vEsc(title),'DESCRIPTION:'+vEsc(notes||''),'BEGIN:VALARM','TRIGGER:PT9H','ACTION:DISPLAY','DESCRIPTION:'+vEsc(title),'END:VALARM','END:VEVENT','END:VCALENDAR'].join('\r\n')}
+
+/* ================= compose ================= */
+const C={ids:[],i:0,subject:'',body:'',oppId:'',tplId:'',to:''};
+function fill(str,c,o){const s=settings();
+  const map={'الاسم':c?(c.type==='org'?'فريق '+(c.name||c.org||''):(c.name||'')):'','الجهة':c&&c.org?c.org:(o?o.org||'':''),'المنصب':c?(c.role||''):'','الفرصة':o?o.title:'','اسمي':s.myName,'التوقيع':signature(s)};
+  return String(str||'').replace(/\{(الاسم|الجهة|المنصب|الفرصة|اسمي|التوقيع)\}/g,(m,k)=>map[k]||m)}
+function openCompose(ids,{tplId,oppId,subject,body,to}={}){
+  ids=ids.filter(id=>{const c=byId(id);return c&&c.email});
+  if(!ids.length&&!to){toast('لا يوجد بريد لدى المحددين');return}
+  const t=templates().find(x=>x.id===tplId)||templates()[0];const free=subject!==undefined;
+  Object.assign(C,{ids,i:0,tplId:free?'':(t?t.id:''),subject:free?subject:(t?t.subject:''),body:free?(body||''):(t?t.body:''),oppId:oppId||'',to:to||''});
+  if(!C.oppId&&ids.length===1){const o=opps().find(o=>o.contactId===ids[0]&&o.stage!=='closed');if(o)C.oppId=o.id}
+  drawCompose(true);
+}
+function drawCompose(full){
+  const c=C.ids.length?byId(C.ids[C.i]):null;const o=C.oppId?byId(C.oppId):null;const email=c?c.email:C.to;
+  const subj=fill(C.subject,c,o),body=fill(C.body,c,o);const enc=encodeURIComponent;
+  const gm=`googlegmail:///co?to=${enc(email)}&subject=${enc(subj)}&body=${enc(body)}`;
+  const mailto=`mailto:${enc(email)}?subject=${enc(subj)}&body=${enc(body)}`;
+  const gmail=`https://mail.google.com/mail/?view=cm&fs=1&to=${enc(email)}&su=${enc(subj)}&body=${enc(body)}`;
+  const outlook=`ms-outlook://compose?to=${enc(email)}&subject=${enc(subj)}&body=${enc(body)}`;
+  const left=[...new Set((subj+body).match(/\[[^\]]+\]|\{[^}]+\}/g)||[])];
+  const warn=left.length?`<span class="chip soon">أكمل: ${esc(left.slice(0,3).join('، '))}</span>`:'';
+  if(!full&&$('#mPrev')){$('#mPrev').innerHTML=`<span class="subj">${esc(subj)}</span>${esc(body)}`;$('#mGapp').href=gm;$('#mMailto').href=mailto;$('#mGmail').href=gmail;$('#mOutlook').href=outlook;$('#mWarn').innerHTML=warn;return}
+  const s=settings();const multi=C.ids.length>1;const last=C.i>=C.ids.length-1;
+  openSheet('رسالة'+(multi?` ${C.i+1} من ${C.ids.length}`:''),`
+   <div class="group"><div class="cell plain" style="cursor:default">${c?avatar(c):''}<div class="body"><div class="t">${esc(c?displayName(c):email)}</div><div class="s ltr">${esc(email)}</div></div><button class="iconbtn" data-act="copy" data-v="${esc(email)}" aria-label="نسخ البريد">${ICON.copy}</button></div></div>
+   <div class="group">
+    ${F('القالب',`<select id="mTpl"><option value="">— نص حر —</option>${templates().map(t=>`<option value="${t.id}" ${t.id===C.tplId?'selected':''}>${esc(t.name)}</option>`).join('')}</select>`)}
+    ${F('بخصوص',`<select id="mOpp"><option value="">—</option>${opps().map(x=>`<option value="${esc(x.id)}" ${x.id===C.oppId?'selected':''}>${esc(x.title)}</option>`).join('')}</select>`)}
+    ${F('الموضوع',`<input id="mSubj" value="${esc(C.subject)}" dir="auto">`)}
+   </div>
+   <div class="group">${F('النص'+(multi?' (يُخصَّص لكل مستلم)':''),`<textarea id="mBody" rows="8" dir="auto">${esc(C.body)}</textarea>`,1)}</div>
+   <section><h2 class="gtitle"><span>كما ستصل</span><span id="mWarn">${warn}</span></h2><div class="preview" id="mPrev" dir="auto"><span class="subj">${esc(subj)}</span>${esc(body)}</div></section>
+   <div class="grid2">
+    <a class="btn pri" id="mGapp" href="${esc(gm)}">تطبيق Gmail</a>
+    <a class="btn" id="mMailto" href="${esc(mailto)}">تطبيق البريد</a>
+    <a class="btn" id="mGmail" target="_blank" rel="noopener" href="${esc(gmail)}">Gmail ويب</a>
+    <a class="btn" id="mOutlook" href="${esc(outlook)}">Outlook</a>
+   </div>
+   <button class="btn" data-act="copyMsg">نسخ الموضوع والنص</button>
+   <p class="hint" style="margin:0">أرفق السيرة أو الملفات في بريدك ثم أرسل، وعُد بعدها وسجّل الإرسال ليضبط الدفتر موعد المتابعة.</p>
+   ${c?`<div class="group">${F('المتابعة',`<select id="mFollow">${[0,3,5,7,14,30].map(n=>`<option value="${n}" ${+s.followDays===n?'selected':''}>${n?'تابِع بعد '+n+' أيام':'بلا متابعة'}</option>`).join('')}</select>`)}</div>
+   <button class="btn pri wide" data-act="logSent">أرسلتها${multi&&!last?'، التالي':''} ✓</button>${multi&&!last?'<button class="btn wide" data-act="skipNext">تخطَّ هذا المستلم</button>':''}`:''}`,
+   {refresh:()=>drawCompose(false)});
+}
+
+/* ================= assistant engine (Anthropic API, called from this device) ================= */
+function compact(x){const o={id:x.id,kind:x.kind};
+  for(const k of ['type','name','org','role','email','phone','country','cat','tags','title','otype','stage','deadline','location','url','next','last','link','contactId']) if(x[k])o[k]=x[k];
+  if(x.notes)o.notes=String(x.notes).slice(0,200);if(x.log&&x.log.length)o.recentLog=x.log.slice(-3).map(l=>l.d+': '+l.s);if(x.ex)o.example=true;return o}
+function snapshotForAI(){
+  const cs=contacts(),os=opps().filter(o=>o.stage!=='closed');
+  return {counts:{contacts:cs.length,openOpps:os.length,sources:sources().length},onlyExampleData:showingExamples(),
+   followUpsDueWithin7Days:cs.filter(c=>c.next&&diff(T,c.next)<=7).map(c=>({id:c.id,name:displayName(c),next:c.next})).slice(0,15),
+   deadlinesWithin21Days:os.filter(o=>o.deadline&&diff(T,o.deadline)>=0&&diff(T,o.deadline)<=21).map(o=>({id:o.id,title:o.title,deadline:o.deadline})).slice(0,15),
+   recentOppTitles:all('opp').slice(-40).map(o=>o.title)}}
+function systemPrompt(){const s=settings();
+  return `أنت «مساعد دفتر الصلات»، مستشار مهني وباحث داخل تطبيق خاص بـ${s.myName||'المستخدم'} على الآيفون، يدير فيه جهات الاتصال المهمة والفرص (وظائف، منح، مشاريع، تدريب) والمصادر.
+تاريخ اليوم: ${T}.
+نبذة المستخدم: ${s.about||'(لا توجد)'}
+مجالات بحثه المفضلة: ${s.topics||'(لم يحددها؛ استنتج من النبذة)'}
+حالة الدفتر: ${JSON.stringify(snapshotForAI())}
+
+طريقة العمل:
+- أجب بالعربية الواضحة وباختصار، إلا إن كتب بالإنجليزية. نص عادي دون عناوين Markdown؛ يمكن ** لتشديد قليل وشرطات للقوائم. لا تضع روابط في النص، فالمصادر تُعرض تلقائيًا تحت ردك.
+- لديك أداة web_search للبحث الفعلي في الويب. استعملها حين يطلب فرصًا أو جهات أو معلومات حديثة. فضّل المواقع الرسمية للجهات وصفحات الإعلانات الأصلية على المجمّعات.
+- الأرشفة: احفظ بأداة save_items، دفعة واحدة، كل فرصة حقيقية مفتوحة وجدتها (العنوان، الجهة، الموعد بصيغة YYYY-MM-DD، رابط الإعلان، بريد التقديم إن ظهر، عن بُعد أم لا، والمصدر)، والجهة الموظِّفة أو المانحة كجهة (kind=contact, type=org) مع إيميلها وهاتفها إن ظهرا في المصدر، وأي بوابة توظيف أو دليل مفيد كمصدر (kind=source).
+- الدقة أهم من الكثرة: لا تخترع إيميلات أو أرقامًا أو روابط أو مواعيد. احفظ فقط ما رأيته فعلًا في نتائج البحث أو في نص المستخدم أو صورته. إن لم يظهر بريد فاتركه فارغًا. تجاهل الفرص المنتهية، والمريبة (رسوم مقابل التوظيف، وعود غير واقعية) ونبّه عليها.
+- قبل الحفظ، تحقق بـsearch_notebook مما إذا كانت الفرصة أو الجهة موجودة لتجنب التكرار (الأداة تدمج المتطابق تلقائيًا أيضًا).
+- حين يلصق نصًا أو صورة (إعلان، بطاقة عمل، صفحة اتصال): استخرج كل الجهات والأشخاص والإيميلات والأرقام والمواعيد واحفظها.
+- لأسئلة الدفتر استعمل search_notebook ولا تخمّن. العناصر التي عليها example=true أمثلة توضيحية وليست حقيقية.
+- لكتابة رسالة استعمل draft_email واملأ الاسم والجهة فعليًا.
+- لتحديث متابعة أو مرحلة أو تسجيل ملاحظة استعمل update_item.
+- بعد الانتهاء لخّص في أسطر قليلة: ماذا وجدت، ماذا حفظت، وما الذي يستحق أن يبدأ به اليوم ولماذا.
+- القيم: cat من ${CATS.map(c=>c[0]+'='+c[1]).join('، ')}. stage من ${STAGES.map(c=>c[0]+'='+c[1]).join('، ')}. otype من ${OTYPES.map(c=>c[0]+'='+c[1]).join('، ')}.`}
+const STR={type:'string'};
+const TOOLS=[
+ {type:'web_search_20250305',name:'web_search',max_uses:8},
+ {name:'search_notebook',description:'ابحث في دفتر المستخدم (جهات، فرص، مصادر) بكلمات. يعيد حتى 12 نتيجة مختصرة مع id. اترك query فارغًا لعرض الأحدث.',input_schema:{type:'object',properties:{query:STR,kind:{type:'string',enum:['contact','opp','source','any']}},required:['query']}},
+ {name:'save_items',description:'احفظ جهات أو أشخاصًا أو فرصًا أو مصادر في الدفتر دفعة واحدة. يدمج مع الموجود إن تطابق البريد أو الاسم أو العنوان.',input_schema:{type:'object',properties:{items:{type:'array',items:{type:'object',properties:{
+   kind:{type:'string',enum:['contact','opp','source']},type:{type:'string',enum:['person','org']},name:{type:'string',description:'اسم الشخص، أو اسم القسم للمؤسسة'},org:STR,role:STR,email:STR,phone:{type:'string',description:'برمز الدولة إن عُرف'},country:STR,cat:STR,tags:STR,links:STR,notes:STR,
+   title:{type:'string',description:'عنوان الفرصة أو اسم المصدر'},otype:STR,stage:STR,deadline:{type:'string',description:'YYYY-MM-DD'},location:STR,remote:{type:'boolean'},link:{type:'string',description:'رابط إعلان الفرصة'},url:{type:'string',description:'رابط المصدر'},source:{type:'string',description:'رابط الصفحة التي جاءت منها المعلومة'},contact_ref:{type:'string',description:'للفرصة: id الجهة أو بريدها أو اسمها لربطها'}},required:['kind']}}},required:['items']}},
+ {name:'update_item',description:'حدّث عنصرًا موجودًا بالـid: next موعد المتابعة، last آخر تواصل، stage، deadline، rel (1-3)، notes_append، log_note.',input_schema:{type:'object',properties:{id:STR,next:STR,last:STR,stage:STR,deadline:STR,notes_append:STR,log_note:STR,rel:{type:'integer'}},required:['id']}},
+ {name:'draft_email',description:'جهّز رسالة بريد؛ تظهر بطاقة يفتحها المستخدم في بريده. contact_id لشخص في الدفتر، أو to_email لبريد آخر.',input_schema:{type:'object',properties:{contact_id:STR,to_email:STR,subject:STR,body:STR,opp_id:STR},required:['subject','body']}}
+];
+async function runTool(name,a){
+  if(name==='search_notebook'){const toks=norm(a.query).split(/\s+/).filter(t=>t.length>1);
+   let pool=[...contacts(),...opps(),...sources()];if(a.kind&&a.kind!=='any')pool=pool.filter(x=>x.kind===a.kind);
+   const scored=pool.map(x=>{const h=norm(JSON.stringify(compact(x)));const sc=toks.length?toks.filter(t=>h.includes(t)).length:1;return [sc,x]}).filter(([s])=>s>0).sort((p,q)=>q[0]-p[0]||(q[1].added||'').localeCompare(p[1].added||''));
+   return {results:scored.slice(0,12).map(([,x])=>compact(x)),total:scored.length}}
+  if(name==='save_items'){const out=[];const list=(a.items||[]).slice(0,40);
+   for(const it of list.filter(i=>i.kind!=='opp')){const r=await upsertFromAI(it);if(r)out.push(r)}
+   for(const it of list.filter(i=>i.kind==='opp')){const r=await upsertFromAI(it);if(r)out.push(r)}
+   curMsg.saved=(curMsg.saved||[]).concat(out);return {saved:out.map(r=>({id:r.id,action:r.action,label:r.label}))}}
+  if(name==='update_item'){const x=S.items.get(a.id);if(!x)return {error:'لا يوجد عنصر حقيقي بهذا الـid'};const y={...x};
+   if(a.next!==undefined)y.next=isoDate(a.next);if(a.last)y.last=isoDate(a.last)||y.last;if(a.stage&&STAGE[a.stage])y.stage=a.stage;if(a.deadline)y.deadline=isoDate(a.deadline)||y.deadline;
+   if(a.rel>=1&&a.rel<=3)y.rel=a.rel;if(a.notes_append)y.notes=((y.notes||'')+'\n'+a.notes_append).trim();if(a.log_note)y.log=[...(y.log||[]),{d:T,t:'note',s:a.log_note}].slice(-200);
+   await put(y,true);curMsg.saved=(curMsg.saved||[]).concat([{id:y.id,action:'updated'}]);return {ok:true}}
+  if(name==='draft_email'){curMsg.draft={contact_id:a.contact_id||'',to:a.to_email||'',subject:a.subject||'',body:a.body||'',opp_id:a.opp_id||''};return {shown:true}}
+  return {error:'أداة غير معروفة'}
+}
+function findExisting(it){
+  const em=(it.email||'').toLowerCase().trim();
+  if(it.kind==='contact')return all('contact').find(c=>(em&&(c.email||'').toLowerCase()===em)||(it.name&&norm(c.name)===norm(it.name)&&norm(c.org)===norm(it.org||c.org))||(!it.name&&it.org&&c.type==='org'&&norm(c.org)===norm(it.org)));
+  if(it.kind==='opp')return all('opp').find(o=>(it.link&&o.link===it.link)||(norm(o.title)===norm(it.title)&&norm(o.org)===norm(it.org||o.org)));
+  if(it.kind==='source')return all('source').find(s=>(it.url&&s.url===it.url)||(it.title&&norm(s.title)===norm(it.title)));
+}
+async function upsertFromAI(it){
+  if(!it||!['contact','opp','source'].includes(it.kind))return null;
+  const ex=findExisting(it);const base=ex?{...ex}:{id:newId(it.kind==='contact'?'c':it.kind==='opp'?'o':'s'),kind:it.kind,added:T,src:'ai',seen:false};
+  const set=(k,v)=>{if(v!==undefined&&v!==null&&String(v).trim()!=='')base[k]=typeof v==='string'?v.trim():v};
+  if(it.kind==='contact'){if(!base.log)base.log=[];set('type',it.type||base.type||(it.name?'person':'org'));['name','org','role','email','phone','country','tags','links','source'].forEach(k=>set(k,it[k]));base.cat=CAT[it.cat]?it.cat:(base.cat||'other');if(!base.rel)base.rel=2;
+    if(it.notes)base.notes=base.notes&&!base.notes.includes(it.notes)?base.notes+'\n'+it.notes:it.notes;
+    if(!base.name&&!base.org&&!base.email)return null}
+  if(it.kind==='opp'){['title','org','location','link','email','source'].forEach(k=>set(k,it[k]));base.otype=OTYPE[it.otype]?it.otype:(base.otype||'job');base.stage=STAGE[it.stage]?it.stage:(base.stage||'idea');
+    if(isoDate(it.deadline))base.deadline=it.deadline;if(typeof it.remote==='boolean')base.remote=it.remote;if(it.notes)base.notes=it.notes;
+    if(it.contact_ref){const r=norm(it.contact_ref);const c=all('contact').find(c=>c.id===it.contact_ref||norm(c.email)===r||norm(displayName(c))===r||norm(c.org)===r);if(c)base.contactId=c.id}
+    else if(!base.contactId&&base.org){const c=all('contact').find(c=>norm(c.org)===norm(base.org));if(c)base.contactId=c.id}
+    if(!base.title)return null}
+  if(it.kind==='source'){set('title',it.title||it.name);set('url',it.url||it.link);base.cat=CAT[it.cat]?it.cat:(base.cat||'other');if(it.notes)base.notes=it.notes;if(base.url&&!/^https?:/.test(base.url))base.url='https://'+base.url;if(!base.title&&!base.url)return null}
+  await put(base,true);
+  return {id:base.id,action:ex?'updated':'added',label:base.kind==='contact'?displayName(base):base.title}
+}
+async function callClaude(body){
+  const {key}=aiConf();
+  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify(body)});
+  let j=null;try{j=await r.json()}catch{}
+  if(!r.ok){const m=j&&j.error&&j.error.message||('HTTP '+r.status);const err=new Error(m);err.status=r.status;throw err}
+  return j;
+}
+function apiErrorText(e){
+  if(!navigator.onLine)return 'لا يوجد اتصال بالإنترنت. المساعد يحتاج الاتصال؛ باقي الدفتر يعمل دونه.';
+  if(e.status===401)return 'المفتاح غير صحيح أو أُلغي. راجعه من المزيد ← المساعد الذكي.';
+  if(e.status===400&&/credit|balance/i.test(e.message))return 'رصيد حسابك في Anthropic نفد. أضف رصيدًا من console.anthropic.com.';
+  if(e.status===429)return 'طلبات كثيرة في وقت قصير. انتظر دقيقة وأعد المحاولة.';
+  if(e.status===529||e.status>=500)return 'خدمة Anthropic مشغولة الآن. أعد المحاولة بعد قليل.';
+  if(e.status===404&&/model/i.test(e.message))return 'النموذج المختار غير متاح لحسابك. اختر نموذجًا آخر من إعداد المساعد.';
+  return 'تعذّر الحصول على رد: '+e.message;
+}
+let curMsg=null,pendingImgs=[];
+function updSend(){const b=$('#sendBtn');if(b)b.disabled=S.busy||(!$('#chatIn').value.trim()&&!pendingImgs.length)}
+function setStatus(t){if(!curMsg)return;curMsg.status=t;const el=document.querySelectorAll('#msgs .msg.a');const last=el[el.length-1];if(last&&curMsg.thinking)last.innerHTML=esc(t)+'<span class="dots"><i></i><i></i><i></i></span>'}
+async function sendChat(text,opts={}){
+  text=(text??$('#chatIn').value).trim();if((!text&&!pendingImgs.length)||S.busy)return;
+  const conf=aiConf();if(!conf.key){S.tab='ai';render();editAI();return}
+  const doc=chatDoc();const msgs=[...doc.msgs];
+  const imgs=pendingImgs;pendingImgs=[];$('#thumbs').hidden=true;$('#thumbs').innerHTML='';
+  const shown=opts.label||text||'استخرج المعلومات من الصورة واحفظها';
+  msgs.push({r:'u',t:shown,imgs:imgs.length||undefined});
+  curMsg={r:'a',t:'',thinking:true,status:'يفكر'};msgs.push(curMsg);
+  S.items.set('chat',{...doc,msgs});$('#chatIn').value='';autoGrow();S.busy=true;S.tab='ai';render();scrollChatEnd();
+  // history: compact text of previous turns
+  const hist=[];for(const m of msgs.slice(-17,-2)){const c=(m.t||'…')+(m.saved&&m.saved.length?`\n[حُفظ أو حُدّث ${m.saved.length} عنصر]`:'')+(m.draft?'\n[جُهّزت مسودة رسالة]':'');const role=m.r==='u'?'user':'assistant';if(hist.length&&hist[hist.length-1].role===role)hist[hist.length-1].content+='\n\n'+c;else hist.push({role,content:c})}
+  if(hist.length&&hist[0].role==='assistant')hist.shift();
+  const userContent=[];for(const b of imgs){userContent.push({type:'image',source:{type:'base64',media_type:'image/jpeg',data:b}})}
+  userContent.push({type:'text',text:text||'استخرج كل المعلومات المفيدة من الصورة واحفظها في الدفتر.'});
+  if(hist.length&&hist[hist.length-1].role==='user')hist.push({role:'assistant',content:'حسنًا.'});
+  const messages=[...hist,{role:'user',content:userContent}];
+  const cites=new Map();let usageIn=0,usageOut=0,searches=0,finalText='';
+  try{
+    for(let step=0;step<12;step++){
+      const res=await callClaude({model:conf.model,max_tokens:4096,system:systemPrompt(),tools:TOOLS,messages});
+      messages.push({role:'assistant',content:res.content});
+      if(res.usage){usageIn+=res.usage.input_tokens||0;usageOut+=res.usage.output_tokens||0;searches+=(res.usage.server_tool_use&&res.usage.server_tool_use.web_search_requests)||0}
+      const texts=[];
+      for(const b of res.content){
+        if(b.type==='text'){texts.push(b.text);(b.citations||[]).forEach(c=>{if(c.url&&!cites.has(c.url))cites.set(c.url,{url:c.url,title:c.title})})}
+        if(b.type==='server_tool_use'&&b.input&&b.input.query)setStatus('يبحث في الويب: «'+b.input.query+'»');
+      }
+      if(texts.join('').trim())finalText=texts.join('').trim();
+      if(res.stop_reason==='tool_use'){
+        const results=[];
+        for(const b of res.content.filter(b=>b.type==='tool_use')){
+          setStatus(b.name==='save_items'?'يؤرشف في الدفتر':b.name==='search_notebook'?'يبحث في دفترك':b.name==='draft_email'?'يكتب الرسالة':'يحدّث الدفتر');
+          let out;try{out=await runTool(b.name,b.input||{})}catch(err){out={error:String(err&&err.message||err)}}
+          results.push({type:'tool_result',tool_use_id:b.id,content:JSON.stringify(out)});
+        }
+        messages.push({role:'user',content:results});render();setStatus('يكمل');continue;
+      }
+      if(res.stop_reason==='pause_turn'){setStatus('يكمل البحث');continue}
+      break;
+    }
+    curMsg.t=finalText||'تم.';
+    curMsg.cites=[...cites.values()].slice(0,10);
+    curMsg.usage=`${searches?searches+' بحث في الويب · ':''}${(usageIn+usageOut)>=1000?Math.round((usageIn+usageOut)/1000)+' ألف رمز':(usageIn+usageOut)+' رمز'}`;
+    if(opts.scan){const s=settings();await put({...s,kind:'settings',id:'settings',lastScan:T},true)}
+  }catch(e){curMsg.t=apiErrorText(e)}
+  curMsg.thinking=false;delete curMsg.status;
+  const final={kind:'chat',id:'chat',msgs:msgs.slice(-60).map(m=>{const c={...m};delete c.thinking;delete c.status;return c})};
+  S.busy=false;await put(final,true);curMsg=null;render();scrollChatEnd();
+}
+function scanPrompt(){const s=settings();
+  return `ابحث في الويب الآن عن فرص جديدة ومفتوحة تناسبني${s.topics?' في هذه المجالات: '+s.topics:' (استنتج المجالات من نبذتي)'}.
+- ركّز على ما يقبل العمل عن بُعد أو من إسطنبول، وعلى الدخل الثابت.
+- ابحث بالعربية والإنجليزية، وفي مواقع الجهات الرسمية وبوابات التوظيف والمنح الموثوقة.
+- تجاهل ما انتهى موعده أو ما سبق أن حفظته (هذه عناوين موجودة: ${all('opp').slice(-30).map(o=>o.title).join('؛ ')||'لا شيء'}).
+- احفظ كل فرصة حقيقية مع موعدها ورابطها وبريد التقديم إن ظهر، والجهة كجهة اتصال، والبوابات المفيدة كمصادر.
+- ثم قل لي في أسطر قليلة: أفضل ثلاث فرص وجدتها ولماذا، وبماذا أبدأ اليوم.`}
+function autoGrow(){const t=$('#chatIn');t.style.height='auto';t.style.height=Math.min(t.scrollHeight,140)+'px'}
+async function toJpegB64(file){const bmp=await createImageBitmap(file);const sc=Math.min(1,1568/Math.max(bmp.width,bmp.height));const cv=document.createElement('canvas');cv.width=Math.round(bmp.width*sc);cv.height=Math.round(bmp.height*sc);cv.getContext('2d').drawImage(bmp,0,0,cv.width,cv.height);return cv.toDataURL('image/jpeg',.85).split(',')[1]}
+
+/* ================= CSV / import / export ================= */
+function parseCSV(text){const rows=[];let row=[],f='',q=false;
+  for(let i=0;i<text.length;i++){const ch=text[i];
+    if(q){if(ch==='"'){if(text[i+1]==='"'){f+='"';i++}else q=false}else f+=ch}
+    else if(ch==='"')q=true;else if(ch===','){row.push(f);f=''}else if(ch==='\n'||ch==='\r'){if(ch==='\r'&&text[i+1]==='\n')i++;row.push(f);rows.push(row);row=[];f=''}else f+=ch}
+  if(f||row.length){row.push(f);rows.push(row)}return rows.filter(r=>r.some(x=>x.trim()))}
+const csvCell=v=>/[",\n]/.test(String(v??''))?'"'+String(v).replace(/"/g,'""')+'"':String(v??'');
+function importRows(rows){const h=rows[0].map(x=>x.trim().toLowerCase());
+  const find=(...keys)=>h.findIndex(x=>keys.some(k=>x===k||x.includes(k)));
+  const ix={name:find('name','الاسم','first name'),last:find('last name'),org:find('organization name','organization','company','الجهة'),role:find('organization title','title','job','المنصب'),email:find('e-mail 1 - value','email','e-mail','البريد'),phone:find('phone 1 - value','phone','mobile','الهاتف'),notes:find('notes','ملاحظات'),country:find('country','البلد'),tags:find('labels','tags','وسوم')};
+  const items=[];for(const r of rows.slice(1)){const g=k=>ix[k]>=0?(r[ix[k]]||'').trim():'';let name=g('name');if(ix.last>=0&&ix.last!==ix.name&&g('last'))name=(name+' '+g('last')).trim();
+    if(!name&&!g('org')&&!g('email'))continue;
+    items.push({kind:'contact',id:newId('c'),type:name?'person':'org',name,org:g('org'),role:g('role'),email:g('email').split(/\s*:::\s*/)[0],phone:g('phone').split(/\s*:::\s*/)[0],notes:g('notes'),country:g('country'),tags:g('tags').replace(/\* ?mycontacts\s*(:::)?/gi,'').replace(/:::/g,'،').trim(),cat:'other',rel:2,log:[],added:T,src:'import'})}
+  return items}
+
+/* ================= events ================= */
+document.addEventListener('click',async e=>{
+  const tb=e.target.closest('.tb');if(tb){S.tab=tb.dataset.tab;render();window.scrollTo(0,S.tab==='ai'?document.body.scrollHeight:0);return}
+  const el=e.target.closest('[data-act]');if(!el)return;const a=el.dataset.act,id=el.dataset.id;
+  switch(a){
+   case 'close':closeSheet();break;
+   case 'copy':copy(el.dataset.v);break;
+   case 'tab':S.tab=el.dataset.to;render();window.scrollTo(0,0);break;
+   case 'scroll':{const t=$('#'+el.dataset.to);if(t)t.scrollIntoView({behavior:'smooth',block:'start'});break}
+   case 'scan':sendChat(scanPrompt(),{scan:true,label:'ابحث عن فرص جديدة تناسبني'});break;
+   case 'askAI':closeSheet();sendChat(el.dataset.q);break;
+   case 'sugg':{const s=SUGG[+el.dataset.i];if(s[2]==='scan'){sendChat(scanPrompt(),{scan:true,label:'ابحث عن فرص جديدة تناسبني'});break}
+     if(s[3]){$('#chatIn').value=s[2];autoGrow();updSend();const t=$('#chatIn');t.focus();t.selectionStart=t.selectionEnd=t.value.length}else sendChat(s[2]);break}
+   case 'clearChat':await put({kind:'chat',id:'chat',msgs:[]});break;
+   case 'openDraft':{const m=chatDoc().msgs[+el.dataset.i];if(!m||!m.draft)break;const d=m.draft;const c=d.contact_id&&byId(d.contact_id);
+     if(!(c&&c.email)&&!d.to){copy(d.subject+'\n\n'+d.body);toast('لا بريد للمستلم، نُسخ النص');break}
+     openCompose(c&&c.email?[c.id]:[],{subject:d.subject,body:d.body,oppId:d.opp_id,to:d.to});break}
+   case 'seenAll':for(const x of [...all('contact'),...all('opp'),...all('source')].filter(isNew))await put({...x,seen:true},true);render();break;
+   case 'cat':S.cat=el.dataset.cat;render();break;
+   case 'stage':S.stage=el.dataset.s;render();break;
+   case 'openContact':openContact(id);break;
+   case 'editContact':editContact(id);break;
+   case 'ctype':{$('#cType').value=el.dataset.v;el.parentNode.querySelectorAll('.pill').forEach(b=>b.setAttribute('aria-pressed',b===el));$('#lName').textContent=el.dataset.v==='org'?'القسم':'الاسم';break}
+   case 'saveContact':{const c=readContact();if(!c.name&&!c.org){toast('اكتب اسمًا أو جهة');return}document.activeElement&&document.activeElement.blur();await put(c);openContact(c.id);toast('حُفظ');break}
+   case 'askDel':el.outerHTML=`<div class="grid2"><button class="btn red" data-act="doDel" data-id="${esc(id)}">نعم، احذف</button><button class="btn" data-act="close">تراجع</button></div>`;break;
+   case 'doDel':closeSheet();await del(id);toast('حُذف');break;
+   case 'addLog':{const c=byId(id);const s=$('#logS').value.trim();if(!s){$('#logS').focus();return}$('#logS').blur();await put({...c,log:[...(c.log||[]),{d:T,t:$('#logT').value,s}].slice(-200),last:T});toast('سُجّل');break}
+   case 'setNext':{const c=byId(id);const v=$('#nextD').value;$('#nextD').blur();await put({...c,next:v});toast(v?'حُفظ الموعد':'أُلغيت المتابعة');break}
+   case 'vcard':{const c=byId(id);shareFile((displayName(c)||'contact').replace(/[\\/:*?"<>|]/g,'')+'.vcf',vcard(c),'text/vcard');break}
+   case 'ics':{const c=byId(id);if(!c.next)return;shareFile('follow-up.ics',ics('متابعة: '+displayName(c),c.next,[c.email,c.phone,c.notes].filter(Boolean).join('\n')),'text/calendar');break}
+   case 'icsOpp':{const o=byId(id);shareFile('deadline.ics',ics('آخر موعد: '+o.title,o.deadline,[o.org,o.link,o.email].filter(Boolean).join('\n')),'text/calendar');break}
+   case 'newOpp':editOpp(null,el.dataset.cid);break;
+   case 'openOpp':openOpp(id);break;
+   case 'editOpp':editOpp(id);break;
+   case 'setStage':{const o=byId(id);if(o.ex){toast('هذا مثال توضيحي');return}await put({...o,stage:el.dataset.s});toast('نُقلت إلى «'+STAGE[el.dataset.s]+'»');break}
+   case 'saveOpp':{const v=k=>$('#'+k).value.trim();const r=v('oRemote');const o={...editOpp.base,title:v('oTitle'),otype:v('oType'),org:v('oOrg'),location:v('oLoc'),stage:v('oStage'),deadline:v('oDeadline'),contactId:v('oContact'),email:v('oEmail'),link:v('oLink'),notes:$('#oNotes').value};
+     if(r==='')delete o.remote;else o.remote=r==='1';
+     if(!o.title){toast('اكتب عنوان الفرصة');return}document.activeElement&&document.activeElement.blur();await put(o);openOpp(o.id);toast('حُفظت');break}
+   case 'composeOpp':{const o=byId(id);const c=byId(o.contactId);openCompose(c&&c.email?[c.id]:[],{oppId:o.id,tplId:['idea','contacted'].includes(o.stage)?'t-apply-ar':'t-follow',to:o.email});break}
+   case 'compose':openCompose([id]);break;
+   case 'bulk':{let cs=contacts();if(S.cat!=='all')cs=cs.filter(c=>c.cat===S.cat);cs=filterContacts(cs,S.q);openCompose(cs.map(c=>c.id));break}
+   case 'copyMsg':{const c=C.ids.length?byId(C.ids[C.i]):null,o=C.oppId?byId(C.oppId):null;copy(fill(C.subject,c,o)+'\n\n'+fill(C.body,c,o));break}
+   case 'logSent':{const c=byId(C.ids[C.i]),o=C.oppId?byId(C.oppId):null;const n=+$('#mFollow').value;
+     if(!c.ex)await put({...c,last:T,next:n?addDays(T,n):(c.next||''),log:[...(c.log||[]),{d:T,t:'email',s:fill(C.subject,c,o)}].slice(-200)},true);
+     if(o&&!o.ex&&['idea','contacted'].includes(o.stage))await put({...o,stage:C.tplId&&C.tplId.startsWith('t-apply')?'applied':'contacted'},true);
+     if(C.i<C.ids.length-1){C.i++;drawCompose(true);toast('سُجّلت، التالي')}else{closeSheet();toast(c.ex?'هذا مثال توضيحي، لم يُسجَّل':'سُجّلت في سجل التواصل')}render();break}
+   case 'skipNext':C.i++;drawCompose(true);break;
+   case 'newSource':editSource(null);break;
+   case 'openSource':editSource(id);break;
+   case 'saveSource':{const v=k=>$('#'+k).value.trim();const s={...editSource.base,title:v('sTitle'),url:v('sUrl'),cat:v('sCat'),notes:$('#sNotes').value};if(!s.title&&!s.url){toast('اكتب اسمًا أو رابطًا');return}if(s.url&&!/^https?:/.test(s.url))s.url='https://'+s.url;await put(s);closeSheet();toast('حُفظ المصدر');break}
+   case 'newTpl':editTpl(null);break;
+   case 'editTpl':editTpl(id);break;
+   case 'insPh':{const ta=$('#tBody');const p=ta.selectionStart??ta.value.length;ta.value=ta.value.slice(0,p)+el.dataset.v+ta.value.slice(ta.selectionEnd??p);ta.focus();ta.selectionStart=ta.selectionEnd=p+el.dataset.v.length;break}
+   case 'saveTpl':await put({kind:'template',id,name:$('#tName').value.trim()||'قالب',lang:$('#tLang').value,subject:$('#tSubj').value,body:$('#tBody').value});closeSheet();toast('حُفظ القالب');break;
+   case 'hideTpl':closeSheet();if(DEFAULT_TPLS.some(d=>d.id===id))await put({kind:'template',id,hidden:true});else await del(id);break;
+   case 'editMe':editMe();break;
+   case 'saveMe':{const v=k=>$('#'+k).value.trim();await put({...settings(),kind:'settings',id:'settings',myName:v('mName'),myRole:v('mRole'),myEmail:v('mEmail'),myPhone:v('mPhone'),myLinks:v('mLinks'),about:$('#mAbout').value.trim(),topics:$('#mTopics').value.trim(),followDays:+v('mFollow')});closeSheet();toast('حُفظ');break}
+   case 'editAI':editAI();break;
+   case 'saveAI':{setAiConf({key:$('#aKey').value.trim(),model:$('#aModel').value});closeSheet();render();toast('حُفظ');break}
+   case 'clearAI':setAiConf({key:'',model:aiConf().model});closeSheet();render();toast('أُزيل المفتاح');break;
+   case 'testAI':{const key=$('#aKey').value.trim(),model=$('#aModel').value;const out=$('#aiTest');if(!key){out.innerHTML='<p class="hint" style="margin:0">الصق المفتاح أولًا.</p>';return}
+     setAiConf({key,model});out.innerHTML='<p class="hint" style="margin:0">جارٍ الاختبار…</p>';
+     try{await callClaude({model,max_tokens:20,messages:[{role:'user',content:'قل: يعمل'}]});out.innerHTML='<div class="banner" style="background:var(--green-soft)"><b style="color:var(--green)">يعمل.</b> المساعد جاهز.</div>'}
+     catch(err){out.innerHTML=`<div class="banner" style="background:var(--red-soft)">${esc(apiErrorText(err))}</div>`}break}
+   case 'exportJson':shareFile('silat-backup-'+T+'.json',JSON.stringify([...S.items.values()].filter(x=>x.kind!=='chat'),null,1),'application/json');break;
+   case 'exportCsv':{const cols=['name','org','role','cat','country','email','phone','links','tags','rel','last','next','notes'];const heads=['الاسم','الجهة','المنصب','التصنيف','البلد','البريد','الهاتف','روابط','وسوم','العلاقة','آخر تواصل','المتابعة','ملاحظات'];
+     shareFile('silat-contacts-'+T+'.csv','\ufeff'+[heads.join(','),...all('contact').map(c=>cols.map(k=>csvCell(k==='cat'?CAT[c.cat]:k==='rel'?REL[c.rel]:c[k])).join(','))].join('\n'),'text/csv');break}
+  }
+});
+$('#topAct').addEventListener('click',()=>{if(S.tab==='opps')editOpp(null);else editContact(null)});
+$('#clipBtn').addEventListener('click',()=>$('#photo').click());
+$('#sendBtn').addEventListener('click',()=>sendChat());
+$('#chatIn').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&matchMedia('(pointer:fine)').matches){e.preventDefault();sendChat()}});
+document.addEventListener('input',e=>{
+  if(e.target.id==='q'){S.q=e.target.value;render()}
+  if(e.target.id==='chatIn'){autoGrow();updSend()}
+  if(e.target.id==='mSubj'){C.subject=e.target.value;drawCompose(false)}
+  if(e.target.id==='mBody'){C.body=e.target.value;drawCompose(false)}
+  if(['mName','mRole','mEmail','mPhone','mLinks'].includes(e.target.id)){const v=k=>$('#'+k).value.trim();$('#sigPrev').textContent=signature({myName:v('mName'),myRole:v('mRole'),myEmail:v('mEmail'),myPhone:v('mPhone'),myLinks:v('mLinks')})}
+});
+document.addEventListener('change',async e=>{
+  if(e.target.id==='mTpl'){const t=templates().find(x=>x.id===e.target.value);C.tplId=e.target.value;if(t){C.subject=t.subject;C.body=t.body}drawCompose(true)}
+  if(e.target.id==='mOpp'){C.oppId=e.target.value;drawCompose(false)}
+  if(e.target.id==='photo'){const files=[...e.target.files].slice(0,4);e.target.value='';const ok=[];
+    for(const f of files){try{ok.push(await toJpegB64(f))}catch{}}
+    pendingImgs=ok;const th=$('#thumbs');th.hidden=!ok.length;th.innerHTML=ok.map(b=>`<img alt="" src="data:image/jpeg;base64,${b}">`).join('');
+    if(ok.length&&!$('#chatIn').value)$('#chatIn').value='استخرج كل المعلومات المفيدة من الصورة واحفظها';autoGrow();updSend()}
+  if(e.target.id==='imp'){const f=e.target.files[0];if(!f)return;const text=await f.text();e.target.value='';
+    try{let items;if(/\.json$/i.test(f.name)||text.trim().startsWith('[')){items=JSON.parse(text).filter(x=>x&&x.id&&x.kind&&x.kind!=='chat')}else{const rows=parseCSV(text.replace(/^\ufeff/,''));if(rows.length<2)throw 0;items=importRows(rows)}
+      if(!items.length){toast('لم أجد بيانات في الملف');return}toast('جارٍ الاستيراد…');for(const it of items)await put(it,true);render();toast(`استُورد ${items.length} عنصر`)}
+    catch{toast('تعذّرت قراءة الملف. استعمل CSV بسطر عناوين أو نسخة JSON')}}
+});
+
+if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
+render();initStore();
+</script>
+</body>
+</html>
